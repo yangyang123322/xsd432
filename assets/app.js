@@ -308,6 +308,36 @@
   };
 
 
+  /* 进度合并（进度码与同步链接共用） */
+  U.applyPacked = function (o) {
+    if (!o || o.v !== 1) return false;
+    var l = U.get("learned", {}), i;
+    for (i = 0; i < (o.L || []).length; i++) l[o.L[i]] = 1;
+    U.set("learned", l);
+    var z = U.get("quiz", {}), k;
+    for (i = 0; i < (o.Z || []).length; i++) z[String(o.Z[i])] = 1;
+    U.set("quiz", z);
+    var q = U.get("qstate", {}), src = o.Q || {}, f;
+    for (k in src) {
+      q[k] = q[k] || {};
+      for (f in src[k]) if (src[k][f]) q[k][f] = src[k][f];
+    }
+    U.set("qstate", q);
+    return true;
+  };
+  U.encPacked = function (s) {
+    try {
+      return btoa(unescape(encodeURIComponent(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    } catch (e) { return ""; }
+  };
+  U.decPacked = function (t) {
+    try {
+      t = t.replace(/-/g, "+").replace(/_/g, "/");
+      while (t.length % 4) t += "=";
+      return decodeURIComponent(escape(atob(t)));
+    } catch (e) { return ""; }
+  };
+
   /* ---------------- 进度同步（导出/合并进度码） ---------------- */
   U.syncPanel = function () {
     if (document.getElementById("syncWrap")) return;
@@ -321,6 +351,7 @@
       '<textarea id="syncText" placeholder="点「生成」得到本机的进度码；或把另一台设备的码粘进来点「合并」"></textarea>' +
       '<div class="sync-btns"><button id="syncGen">生成本机进度码</button>' +
       '<button id="syncApply" class="primary">合并这段码并刷新</button></div>' +
+      '<div class="sync-btns" style="margin-top:8px"><button id="syncLink">复制「同步链接」（推荐）</button></div>' +
       '<div id="syncMsg" class="sync-msg"></div></div></div>';
     document.body.appendChild(wrap);
 
@@ -371,25 +402,21 @@
       $("syncMsg").textContent = "本机：已学会 " + o.L.length + " 招 · 默写会了 " + o.Z.length + " 条 · 题库记录 " + Object.keys(o.Q).length + " 题";
     };
 
+    $("syncLink").onclick = function () {
+      var url = location.origin + location.pathname + "#s=" + U.encPacked(pack());
+      var t = $("syncText");
+      t.value = url;
+      t.select();
+      try { if (navigator.clipboard) navigator.clipboard.writeText(url); } catch (e) { }
+      $("syncMsg").textContent = "链接已生成。发到另一台设备（微信文件传输助手发给自己最快），点开即自动合并。";
+    };
+
     $("syncApply").onclick = function () {
       var raw = ($("syncText").value || "").trim();
       if (!raw) { $("syncMsg").textContent = "先粘一段进度码"; return; }
       var o;
       try { o = JSON.parse(raw); } catch (e) { $("syncMsg").textContent = "这段码读不出来，检查有没有粘全"; return; }
-      if (!o || o.v !== 1) { $("syncMsg").textContent = "不是这个站的进度码"; return; }
-      var l = U.get("learned", {}), i;
-      for (i = 0; i < (o.L || []).length; i++) l[o.L[i]] = 1;
-      U.set("learned", l);
-      var z = U.get("quiz", {}), k;
-      for (k in z) if (z[k] === 1) z[k] = 1;
-      for (i = 0; i < (o.Z || []).length; i++) z[String(o.Z[i])] = 1;
-      U.set("quiz", z);
-      var q = U.get("qstate", {}), src = o.Q || {}, f;
-      for (k in src) {
-        q[k] = q[k] || {};
-        for (f in src[k]) if (src[k][f]) q[k][f] = src[k][f];
-      }
-      U.set("qstate", q);
+      if (!U.applyPacked(o)) { $("syncMsg").textContent = "不是这个站的进度码"; return; }
       $("syncMsg").textContent = "已合并，刷新后生效…";
       setTimeout(function () { if (!window.__syncNoReload) location.reload(); }, 500);
     };
@@ -397,6 +424,15 @@
 
   /* ---------------- 启动 ---------------- */
   U.boot = function (page) {
+    /* 同步链接：地址里带 #s=<进度>，进来先合并，再把 hash 擦掉并刷新 */
+    if (location.hash.indexOf("#s=") === 0) {
+      var merged = false;
+      try { merged = U.applyPacked(JSON.parse(U.decPacked(location.hash.slice(3)))); } catch (e) { }
+      if (merged) {
+        try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { }
+        if (!window.__syncNoReload) { location.reload(); return; }
+      }
+    }
     applyTheme(U.theme());
     U.nav(page);
     const b = document.getElementById("themeBtn");

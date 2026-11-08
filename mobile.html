@@ -458,6 +458,24 @@ strong{color:var(--ink)}
       Q: {}
     });
   }
+  function applyPacked(o) {
+    if (!o || o.v !== 1) return false;
+    (o.L || []).forEach(function (id) { learned[id] = 1; });
+    (o.Z || []).forEach(function (k) { quizDone[String(k)] = 1; });
+    saveLearned(); saveQuiz();
+    return true;
+  }
+  function encPacked(s) {
+    try { return btoa(unescape(encodeURIComponent(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+    catch (e) { return ""; }
+  }
+  function decPacked(t) {
+    try {
+      t = t.replace(/-/g, "+").replace(/_/g, "/");
+      while (t.length % 4) t += "=";
+      return decodeURIComponent(escape(atob(t)));
+    } catch (e) { return ""; }
+  }
   function syncOpen() {
     if (document.getElementById("syncWrap")) { document.getElementById("syncWrap").classList.add("on"); return; }
     var d = document.createElement("div");
@@ -466,6 +484,7 @@ strong{color:var(--ink)}
       + '<div class="sync-p">手机和电脑的「已学会」各存各的。生成一段码，发到电脑（或粘电脑的码）合并，只增不减。</div>'
       + '<textarea id="syncText" placeholder="点「生成」得到手机上的进度码；或把电脑的码粘进来点「合并」"></textarea>'
       + '<div class="sync-btns"><button id="syncGen">生成手机进度码</button><button id="syncApply" class="primary">合并并刷新</button></div>'
+      + '<div class="sync-btns" style="margin-top:8px"><button id="syncLink">复制「同步链接」（推荐）</button></div>'
       + '<div id="syncMsg" class="sync-msg"></div></div>';
     document.body.appendChild(d);
     d.classList.add("on");
@@ -479,21 +498,32 @@ strong{color:var(--ink)}
       var o = JSON.parse(code);
       $el("syncMsg").textContent = "手机：已学会 " + o.L.length + " 招 · 默写会了 " + o.Z.length + " 条";
     };
+
+    $el("syncLink").onclick = function () {
+      var url = location.origin + location.pathname + "#s=" + encPacked(syncPack());
+      var t = $el("syncText");
+      t.value = url;
+      t.select();
+      try { if (navigator.clipboard) navigator.clipboard.writeText(url); } catch (e) { }
+      $el("syncMsg").textContent = "链接已生成。发到电脑（微信发自己最快），点开即自动合并。";
+    };
     $el("syncApply").onclick = function () {
       var raw = ($el("syncText").value || "").trim(), o;
       if (!raw) { $el("syncMsg").textContent = "先粘一段进度码"; return; }
       try { o = JSON.parse(raw); } catch (e) { $el("syncMsg").textContent = "这段码读不出来，检查有没有粘全"; return; }
-      if (!o || o.v !== 1) { $el("syncMsg").textContent = "不是这个站的进度码"; return; }
-      var i;
-      for (i = 0; i < (o.L || []).length; i++) learned[o.L[i]] = 1;
-      for (i = 0; i < (o.Z || []).length; i++) quizDone[String(o.Z[i])] = 1;
-      saveLearned(); saveQuiz();
+      if (!applyPacked(o)) { $el("syncMsg").textContent = "不是这个站的进度码"; return; }
       $el("syncMsg").textContent = "已合并 " + (o.L || []).length + " 招 / " + (o.Z || []).length + " 条，正在重画…";
       setTimeout(function () { d.classList.remove("on"); render(); }, 400);
     };
   }
 
   /* ---------- 启动 ---------- */
+  /* 同步链接：地址带 #s=<进度> 时先合并，擦掉 hash 再重画 */
+  if (location.hash.indexOf("#s=") === 0) {
+    var _merged = false;
+    try { _merged = applyPacked(JSON.parse(decPacked(location.hash.slice(3)))); } catch (e) { }
+    if (_merged) { try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { } }
+  }
   var m = D.meta || {};
   var sub = document.getElementById("sub");
   var sb = document.getElementById("syncBtn"); if (sb) sb.onclick = syncOpen;
