@@ -32,7 +32,10 @@
     try { const v = localStorage.getItem(NS + k); return v ? JSON.parse(v) : dft; }
     catch (e) { return dft; }
   };
-  U.set = function (k, v) { try { localStorage.setItem(NS + k, JSON.stringify(v)); } catch (e) {} };
+  U.set = function (k, v) {
+    try { localStorage.setItem(NS + k, JSON.stringify(v)); } catch (e) { }
+    if (U._onProgress && !U._silent) { try { U._onProgress(k); } catch (e) { } }
+  };
   U.del = function (k) { localStorage.removeItem(NS + k); };
 
   /* ---------------- 工具 ---------------- */
@@ -311,19 +314,22 @@
   /* 进度合并（进度码与同步链接共用） */
   U.applyPacked = function (o) {
     if (!o || o.v !== 1) return false;
-    var l = U.get("learned", {}), i;
-    for (i = 0; i < (o.L || []).length; i++) l[o.L[i]] = 1;
+    var changed = false, i;
+    U._silent = true;
+    var l = U.get("learned", {}), k, f, q, z, src;
+    for (i = 0; i < (o.L || []).length; i++) { if (!l[o.L[i]]) { l[o.L[i]] = 1; changed = true; } }
     U.set("learned", l);
-    var z = U.get("quiz", {}), k;
-    for (i = 0; i < (o.Z || []).length; i++) z[String(o.Z[i])] = 1;
+    z = U.get("quiz", {});
+    for (i = 0; i < (o.Z || []).length; i++) { if (z[String(o.Z[i])] !== 1) { z[String(o.Z[i])] = 1; changed = true; } }
     U.set("quiz", z);
-    var q = U.get("qstate", {}), src = o.Q || {}, f;
+    q = U.get("qstate", {}); src = o.Q || {};
     for (k in src) {
       q[k] = q[k] || {};
-      for (f in src[k]) if (src[k][f]) q[k][f] = src[k][f];
+      for (f in src[k]) if (src[k][f] && !q[k][f]) { q[k][f] = src[k][f]; changed = true; }
     }
     U.set("qstate", q);
-    return true;
+    U._silent = false;
+    return changed;
   };
   U.encPacked = function (s) {
     try {
@@ -352,6 +358,11 @@
       '<div class="sync-btns"><button id="syncGen">生成本机进度码</button>' +
       '<button id="syncApply" class="primary">合并这段码并刷新</button></div>' +
       '<div class="sync-btns" style="margin-top:8px"><button id="syncLink">复制「同步链接」（推荐）</button></div>' +
+      '<div class="sync-cloud"><div class="sync-h2">云同步（可选 · 自动双向）</div>' +
+      '<div class="sync-p">粘一次 GitHub token（只需 gist 权限），两台设备用同一个 token，之后改完自动同步，不用再发链接。</div>' +
+      '<input id="ghTok" placeholder="ghp_… 或 github_pat_…">' +
+      '<div class="sync-btns"><button id="ghGo">连接并同步</button><button id="ghOff">断开云同步</button></div>' +
+      '<div id="ghMsg" class="sync-msg"></div></div>' +
       '<div id="syncMsg" class="sync-msg"></div></div></div>';
     document.body.appendChild(wrap);
 
@@ -374,7 +385,11 @@
       ".sync-btns button{flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--line,#d8dde5);background:transparent;" +
       "color:inherit;font:13px 'Microsoft YaHei',sans-serif;cursor:pointer}" +
       ".sync-btns button.primary{background:#0e7c66;border-color:#0e7c66;color:#fff}" +
-      ".sync-msg{font-size:12.5px;color:#0e7c66;margin-top:8px;min-height:18px}";
+      ".sync-msg{font-size:12.5px;color:#0e7c66;margin-top:8px;min-height:18px}" +
+      ".sync-cloud{margin-top:14px;border-top:1px dashed var(--line,#dfe3ea);padding-top:12px}" +
+      ".sync-h2{font-weight:700;font-size:13px;margin-bottom:4px}" +
+      "#ghTok{width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid var(--line,#d8dde5);border-radius:8px;" +
+      "font:12px ui-monospace,Consolas,monospace;background:var(--bg,#fbfbfc);color:inherit}";
     document.head.appendChild(style);
 
     var $ = function (id) { return document.getElementById(id); };
@@ -402,6 +417,8 @@
       $("syncMsg").textContent = "本机：已学会 " + o.L.length + " 招 · 默写会了 " + o.Z.length + " 条 · 题库记录 " + Object.keys(o.Q).length + " 题";
     };
 
+    $("ghGo").onclick = function () { U.cloud.connect($("ghTok").value); };
+    $("ghOff").onclick = function () { U.cloud.disconnect(); };
     $("syncLink").onclick = function () {
       var url = location.origin + location.pathname + "#s=" + U.encPacked(pack());
       var t = $("syncText");
@@ -422,6 +439,135 @@
     };
   };
 
+  /* ---------------- 云同步：GitHub 私密 Gist ---------------- */
+  U.cloud = (function () {
+    var API = "https://api.github.com", FILE = "xsd432-progress.json", DESC = "xsd432-progress";
+    var timer = null;
+
+    function cfg() { return U.get("ghcfg", null); }
+    function saveCfg(o) { var keep = U._silent; U._silent = true; U.set("ghcfg", o); U._silent = keep; }
+    function on() { var c = cfg(); return !!(c && c.token && c.gid); }
+
+    function packNow() {
+      var L = [], Z = [], Q = {}, k, l, z, q;
+      l = U.get("learned", {});
+      for (k in l) if (l[k]) L.push(k);
+      z = U.get("quiz", {});
+      for (k in z) if (z[k] === 1) Z.push(String(k));
+      q = U.get("qstate", {});
+      for (k in q) if (q[k] && (q[k].done || q[k].wrong || q[k].star)) Q[k] = q[k];
+      return JSON.stringify({ v: 1, ts: new Date().toISOString().slice(0, 10), L: L, Z: Z, Q: Q });
+    }
+
+    function hdrs() {
+      var c = cfg();
+      return {
+        Authorization: "token " + c.token,
+        "Content-Type": "application/json",
+        Accept: "application/vnd.github+json"
+      };
+    }
+
+    function api(path, opt) {
+      opt = opt || {};
+      opt.headers = hdrs();
+      return fetch(API + path, opt).then(function (r) {
+        if (!r.ok) return r.text().then(function (t) { throw new Error("HTTP " + r.status + " · " + t.slice(0, 90)); });
+        return r.json();
+      });
+    }
+
+    function say(t) { var el = document.getElementById("ghMsg"); if (el) el.textContent = t; }
+
+    function mergeText(txt) {
+      var o;
+      try { o = JSON.parse(txt); } catch (e) { return false; }
+      return U.applyPacked(o);
+    }
+
+    function pull() {
+      if (!on()) return Promise.resolve(false);
+      var c = cfg();
+      return api("/gists/" + c.gid).then(function (g) {
+        var f = g.files && g.files[FILE];
+        if (!f) return false;
+        if (f.truncated && f.raw_url) {
+          return fetch(f.raw_url).then(function (r) { return r.text(); }).then(mergeText);
+        }
+        return mergeText(f.content);
+      });
+    }
+
+    function push() {
+      if (!on()) return Promise.resolve(false);
+      var c = cfg();
+      return pull().catch(function () { return false; }).then(function () {
+        var body = { files: {} };
+        body.files[FILE] = { content: packNow() };
+        return api("/gists/" + c.gid, { method: "PATCH", body: JSON.stringify(body) }).then(function () { return true; });
+      });
+    }
+
+    function pushLater() {
+      if (!on()) return;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(function () {
+        push().then(function () { say("已自动同步 " + new Date().toTimeString().slice(0, 5)); })
+          .catch(function (e) { say("同步失败：" + e.message); });
+      }, 2200);
+    }
+
+    function connect(tok) {
+      tok = (tok || "").trim();
+      if (!tok) { say("先把 token 粘进来"); return; }
+      say("正在连接…");
+      saveCfg({ token: tok, gid: (cfg() || {}).gid || null });
+      var c = cfg();
+      var p = c.gid ? Promise.resolve(c.gid) : api("/gists?per_page=100").then(function (list) {
+        for (var i = 0; i < list.length; i++) if (list[i].description === DESC) return list[i].id;
+        return null;
+      });
+      p.then(function (gid) {
+        if (gid) { saveCfg({ token: tok, gid: gid }); return gid; }
+        return api("/gists", {
+          method: "POST",
+          body: JSON.stringify({ description: DESC, public: false, files: (function () { var f = {}; f[FILE] = { content: packNow() }; return f; })() })
+        }).then(function (g) { saveCfg({ token: tok, gid: g.id }); return g.id; });
+      }).then(function (gid) {
+        saveCfg({ token: tok, gid: gid });
+        return pull();
+      }).then(function () {
+        return push();
+      }).then(function () {
+        say("已连接 ✓ 之后两台设备自动同步（改完约 2 秒上传）");
+      }).catch(function (e) {
+        say("连接失败：" + e.message);
+      });
+    }
+
+    function disconnect() {
+      var keep = U._silent; U._silent = true; U.set("ghcfg", null); U._silent = keep;
+      say("已断开云同步（本地进度保留）");
+    }
+
+    function boot() {
+      if (!on()) return;
+      pull().then(function (changed) {
+        if (changed && !sessionStorage.getItem("cloudJust")) {
+          sessionStorage.setItem("cloudJust", "1");
+          setTimeout(function () { sessionStorage.removeItem("cloudJust"); }, 4000);
+          setTimeout(function () { if (!window.__syncNoReload) location.reload(); }, 120);
+        }
+      }).catch(function () { });
+    }
+
+    return { on: on, pull: pull, push: push, pushLater: pushLater, connect: connect, disconnect: disconnect, boot: boot, say: say };
+  })();
+  U.cloudLater = function () { if (U.cloud) U.cloud.pushLater(); };
+  U._onProgress = function (k) {
+    if (k === "learned" || k === "quiz" || k === "qstate") U.cloudLater && U.cloudLater();
+  };
+
   /* ---------------- 启动 ---------------- */
   U.boot = function (page) {
     /* 同步链接：地址里带 #s=<进度>，进来先合并，再把 hash 擦掉并刷新 */
@@ -440,6 +586,7 @@
     document.querySelectorAll("[data-md]").forEach((el) => { el.innerHTML = U.md(el.getAttribute("data-md")); });
     U.bindCards(document);
     if (U.syncPanel && !document.getElementById('noSync')) U.syncPanel();
+    if (U.cloud) U.cloud.boot();
     // 页面内容是 JS 渲染的，浏览器自带的 #anchor 跳转常常落空：渲染完再补一次
     if (location.hash && location.hash.length > 1) {
       const jump = (tries) => {

@@ -245,7 +245,10 @@ strong{color:var(--ink)}
   /* ---------- 状态 ---------- */
   var LS = {
     get: function (k, d) { try { var v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
-    set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } }
+    set: function (k, v) {
+      try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { }
+      if (window.__onProgress && !window.__silent) { try { window.__onProgress(k); } catch (e) { } }
+    }
   };
   var learned = {}, quizDone = {};
   (LS.get("m_learned", []) || []).forEach(function (k) { learned[k] = 1; });
@@ -449,6 +452,97 @@ strong{color:var(--ink)}
 
 
   /* ---------- SYNC_PANEL 进度同步（手机端） ---------- */
+  /* ---------- 云同步：GitHub 私密 Gist ---------- */
+  var cloud = (function () {
+    var API = "https://api.github.com", FILE = "xsd432-progress.json", DESC = "xsd432-progress";
+    var timer = null;
+
+    function cfg() { return LS.get("m_ghcfg", null); }
+    function saveCfg(o) { window.__silent = true; LS.set("m_ghcfg", o); window.__silent = false; }
+    function on() { var c = cfg(); return !!(c && c.token && c.gid); }
+    function say(t) { var el = document.getElementById("ghMsg"); if (el) el.textContent = t; }
+    function hdrs() {
+      var c = cfg();
+      return { Authorization: "token " + c.token, "Content-Type": "application/json", Accept: "application/vnd.github+json" };
+    }
+    function api(path, opt) {
+      opt = opt || {};
+      opt.headers = hdrs();
+      return fetch(API + path, opt).then(function (r) {
+        if (!r.ok) return r.text().then(function (t) { throw new Error("HTTP " + r.status + " · " + t.slice(0, 90)); });
+        return r.json();
+      });
+    }
+    function mergeText(txt) {
+      var o;
+      try { o = JSON.parse(txt); } catch (e) { return false; }
+      return applyPacked(o);
+    }
+    function pull() {
+      if (!on()) return Promise.resolve(false);
+      var c = cfg();
+      return api("/gists/" + c.gid).then(function (g) {
+        var f = g.files && g.files[FILE];
+        if (!f) return false;
+        if (f.truncated && f.raw_url) return fetch(f.raw_url).then(function (r) { return r.text(); }).then(mergeText);
+        return mergeText(f.content);
+      });
+    }
+    function push() {
+      if (!on()) return Promise.resolve(false);
+      var c = cfg();
+      return pull().catch(function () { return false; }).then(function () {
+        var body = { files: {} };
+        body.files[FILE] = { content: syncPack() };
+        return api("/gists/" + c.gid, { method: "PATCH", body: JSON.stringify(body) }).then(function () { return true; });
+      });
+    }
+    function pushLater() {
+      if (!on()) return;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(function () {
+        push().then(function () { say("已自动同步 " + new Date().toTimeString().slice(0, 5)); })
+          .catch(function (e) { say("同步失败：" + e.message); });
+      }, 2200);
+    }
+    function connect(tok) {
+      tok = (tok || "").trim();
+      if (!tok) { say("先把 token 粘进来"); return; }
+      say("正在连接…");
+      saveCfg({ token: tok, gid: (cfg() || {}).gid || null });
+      var c = cfg();
+      var p = c.gid ? Promise.resolve(c.gid) : api("/gists?per_page=100").then(function (list) {
+        for (var i = 0; i < list.length; i++) if (list[i].description === DESC) return list[i].id;
+        return null;
+      });
+      p.then(function (gid) {
+        if (gid) { saveCfg({ token: tok, gid: gid }); return gid; }
+        return api("/gists", {
+          method: "POST",
+          body: JSON.stringify({ description: DESC, public: false, files: (function () { var f = {}; f[FILE] = { content: syncPack() }; return f; })() })
+        }).then(function (g) { saveCfg({ token: tok, gid: g.id }); return g.id; });
+      }).then(function (gid) {
+        saveCfg({ token: tok, gid: gid });
+        return pull();
+      }).then(function () { return push(); }).then(function () {
+        say("已连接 ✓ 之后自动同步（改完约 2 秒上传）");
+        render();
+      }).catch(function (e) { say("连接失败：" + e.message); });
+    }
+    function disconnect() {
+      window.__silent = true; LS.set("m_ghcfg", null); window.__silent = false;
+      say("已断开云同步（本地进度保留）");
+    }
+    function boot() {
+      if (!on()) return;
+      pull().then(function (changed) {
+        if (changed) { render(); say("已从云端同步 ✓"); }
+      }).catch(function () { });
+    }
+    return { on: on, pull: pull, push: push, pushLater: pushLater, connect: connect, disconnect: disconnect, boot: boot };
+  })();
+  window.__onProgress = function (k) { if (k === "m_learned" || k === "m_quiz") cloud.pushLater(); };
+
   function syncPack() {
     return JSON.stringify({
       v: 1,
@@ -460,10 +554,13 @@ strong{color:var(--ink)}
   }
   function applyPacked(o) {
     if (!o || o.v !== 1) return false;
-    (o.L || []).forEach(function (id) { learned[id] = 1; });
-    (o.Z || []).forEach(function (k) { quizDone[String(k)] = 1; });
+    var changed = false;
+    window.__silent = true;
+    (o.L || []).forEach(function (id) { if (!learned[id]) { learned[id] = 1; changed = true; } });
+    (o.Z || []).forEach(function (k) { if (!quizDone[String(k)]) { quizDone[String(k)] = 1; changed = true; } });
     saveLearned(); saveQuiz();
-    return true;
+    window.__silent = false;
+    return changed;
   }
   function encPacked(s) {
     try { return btoa(unescape(encodeURIComponent(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
@@ -485,6 +582,11 @@ strong{color:var(--ink)}
       + '<textarea id="syncText" placeholder="点「生成」得到手机上的进度码；或把电脑的码粘进来点「合并」"></textarea>'
       + '<div class="sync-btns"><button id="syncGen">生成手机进度码</button><button id="syncApply" class="primary">合并并刷新</button></div>'
       + '<div class="sync-btns" style="margin-top:8px"><button id="syncLink">复制「同步链接」（推荐）</button></div>'
+      + '<div class="sync-cloud"><div class="sync-h2">云同步（可选 · 自动双向）</div>'
+      + '<div class="sync-p">粘一次 GitHub token（只需 gist 权限），两台设备用同一个 token，之后自动同步。</div>'
+      + '<input id="ghTok" placeholder="ghp_… 或 github_pat_…">'
+      + '<div class="sync-btns"><button id="ghGo">连接并同步</button><button id="ghOff">断开云同步</button></div>'
+      + '<div id="ghMsg" class="sync-msg"></div></div>'
       + '<div id="syncMsg" class="sync-msg"></div></div>';
     document.body.appendChild(d);
     d.classList.add("on");
@@ -499,6 +601,8 @@ strong{color:var(--ink)}
       $el("syncMsg").textContent = "手机：已学会 " + o.L.length + " 招 · 默写会了 " + o.Z.length + " 条";
     };
 
+    $el("ghGo").onclick = function () { cloud.connect($el("ghTok").value); };
+    $el("ghOff").onclick = function () { cloud.disconnect(); };
     $el("syncLink").onclick = function () {
       var url = location.origin + location.pathname + "#s=" + encPacked(syncPack());
       var t = $el("syncText");
@@ -529,6 +633,7 @@ strong{color:var(--ink)}
   var sb = document.getElementById("syncBtn"); if (sb) sb.onclick = syncOpen;
   if (sub) sub.textContent = (m.npojue || 34) + " 招 · " + (m.nconcept || 87) + " 辨析 · " + (m.nq || 111) + " 真题";
   render();
+  cloud.boot();
 })();
 </script>
 </body>

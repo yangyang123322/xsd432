@@ -121,3 +121,27 @@ site/
 3. 合并只增不减（并集），不会把 B 上已经打过的勾删掉。
 
 码的格式：`{"v":1,"ts":"...","L":["j05"],"Z":["3"],"Q":{"2026-1":{"done":1}}}` —— L 是招法 id、Z 是默写编号、Q 是题库状态。
+## 九、云同步（可选，自动双向）
+
+单文件版和桌面版都内置了「云同步」：把进度存进你自己的一个**私密 Gist**，两台设备用同一个 token，之后每次改动（标记已学会 / 默写 / 题库）约 2 秒上传，打开页面自动拉取合并。
+
+**怎么开**
+
+1. GitHub → Settings → Developer settings → Personal access tokens → **Fine-grained tokens** → Generate new token
+2. 只勾一项：**Account permissions → Gists → Read and write**（其它全部 No access），有效期自选
+3. 复制生成的 `github_pat_…`
+4. 打开站点 → 点 **⇅** → 在「云同步」框里粘进去 → **连接并同步**
+5. 另一台设备重复第 4 步（粘同一个 token）——它会自动找到同一个 gist 并合并
+
+**规则**
+
+- 合并只增不减：两边的「已学会」取并集，不会互相覆盖
+- token 只存在本机 localStorage，不写进页面源码，也不上传到别处
+- 担心泄漏就随时在 GitHub 撤销该 token，页面里点「断开云同步」即可
+- 不想用云同步也行：⇅ 面板里的「同步链接」一条 URL 就能手动同步，零账号零风险
+
+**代码位置**
+
+- 桌面版：`assets/app.js` 里的 `U.cloud`（`U.set` 会在 learned/quiz/qstate 变化时调 `pushLater`）
+- 手机版：`build/mobile_app.js` 里的 `cloud`（`LS.set` 变化时调 `pushLater`）
+- 两端 gist 文件名固定 `xsd432-progress.json`，description 固定 `xsd432-progress`（用来跨设备认领同一个 gist）
