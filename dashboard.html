@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>数据大盘 · 432 统计</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/app.css">
+<script>document.documentElement.setAttribute('data-theme',localStorage.getItem('ds432.theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))</script>
+</head>
+<body data-page="dashboard.html">
+<div class="shell">
+  <aside class="side"></aside>
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="sub">DASHBOARD · 2019—2026 · 8 套卷 · 111 题</div>
+        <h1>数据大盘</h1>
+      </div>
+      <div class="actions">
+        <select id="order">
+          <option value="main">按主考点题数</option>
+          <option value="pts">按总分值</option>
+          <option value="ny">按出现年数</option>
+        </select>
+        <button class="btn" id="themeBtn" title="切换主题">☀</button>
+      </div>
+    </div>
+
+    <div class="grid g4" id="kpis" style="margin-bottom:18px"></div>
+
+    <div class="grid g2">
+      <div class="card">
+        <div class="spread"><h3 style="margin:0">考点热度</h3><span class="small muted" id="hotNote"></span></div>
+        <div id="hotList" style="margin-top:10px"></div>
+      </div>
+      <div class="card">
+        <div class="spread"><h3 style="margin:0">考频分档</h3><span class="small muted">按「出现年数」</span></div>
+        <div class="grid g2" id="tierBox" style="margin-top:10px"></div>
+        <div class="sep"></div>
+        <div class="small muted">低频考点（只在 1 年出现）不是不考，是样本太小；名词解释与填空最爱从「低频但定义主干」里出。冲刺期优先级：必考 &gt; 高频 &gt; 低频(名词) &gt; 中频。</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="spread"><h3 style="margin:0">年份 × 考点 热力</h3><span class="small muted">数字 = 该年以该考点为「主考点」的题目数</span></div>
+      <div class="tb-wrap" style="margin-top:12px"><table class="tb" id="heat"></table></div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="spread"><h3 style="margin:0">还没当过主考点的考点</h3><span class="small muted" id="orphanNote"></span></div>
+      <div class="small muted" style="margin:6px 0 10px">分两类：<b>括号里数字 &gt; 0</b> 的，八年里只作为某道题的「第二标签」出现，没被单独拎出来当主考点——名词解释与填空最爱从这里出；<b>数字 = 0</b> 的，是考纲里有、但本题库八年真题一次都没标注到的，要么真没考，要么原卷漏标，值得回原卷确认。</div>
+      <div class="pill-row" id="orphan"></div>
+    </div>
+
+    <div class="grid g2" style="margin-top:14px">
+      <div class="card">
+        <h3 style="margin-top:0">章节分布</h3>
+        <div id="chBox"></div>
+        <div class="small muted" style="margin-top:10px">分值口径为原卷分值；2019/2020/2021/2023 原卷不足 150 分处已按 150 折算，折算系数见 <a href="structure.html">命题结构</a>。</div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">题型与能力层级</h3>
+        <div id="typeBox"></div>
+        <div class="sep"></div>
+        <div id="levelBox"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h3 style="margin-top:0">全部 40 个考点</h3>
+      <div class="tb-wrap"><table class="tb" id="allKp"></table></div>
+    </div>
+
+    <footer class="foot">
+      <b>口径说明</b>：①「主考点」= 每题经关键词+方法加权后判定的第一考点，一道题只记一次；「涉及题数」= 该考点出现在多少题的标注里，可重复计数。② 热度排序默认按主考点题数，避免多标签虚高。③ 分值 = 该题在原卷中的分值。④ 出现年数 = 该考点在 2019—2026 中出现的年份个数，用于分档：必考 ≥6 年、高频 4—5 年、中频 2—3 年、低频 1 年。
+    </footer>
+  </main>
+</div>
+
+<script src="data/data.js"></script>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+U.boot("dashboard.html");
+(function(){
+  const D = window.DATA, K = D.kps, Q = D.qs;
+  const tierCount = {必考:0,高频:0,中频:0,低频:0};
+  K.forEach(k => tierCount[k.tier]++);
+  const nCh = D.chapters.length;
+
+  const covered = K.filter(k=>k.main>0).length;
+  const kpiRows = [
+    ["真题总量", D.meta.nq, "题", "八套卷 · 111 题合计 1154 分"],
+    ["考点覆盖", Math.round(covered/K.length*100), "%", covered + " / " + K.length + " 个考点当过主考点"],
+    ["必考考点", tierCount["必考"], "个", "8 年中 ≥6 年出现"],
+    ["平均每题", (Q.reduce((a,q)=>a+q.pts,0)/Q.length).toFixed(1), "分", "13 个高频招覆盖大半"]
+  ];
+  document.getElementById("kpis").innerHTML = kpiRows.map(([k,v,u,h]) =>
+    '<div class="kpi"><div class="k">'+k+'</div><div class="v">'+v+'<small>'+u+'</small></div><div class="h">'+h+'</div></div>').join("");
+
+  function drawHot(){
+    const by = document.getElementById("order").value;
+    const list = [...K].sort((a,b)=> b[by]-a[by] || b.n-a.n).slice(0,20);
+    const mx = Math.max(...list.map(k=>k[by])) || 1;
+    document.getElementById("hotList").innerHTML = list.map(k =>
+      '<div class="bar-row" style="grid-template-columns:186px 1fr 52px">'+
+      '<span class="nm"><span class="tier '+U.tierClass(k.tier)+'" style="margin-right:5px">'+k.tier[0]+'</span>'+k.name+'</span>'+
+      '<div class="bar"><i style="width:'+(k[by]/mx*100)+'%"></i></div>'+
+      '<span class="num">'+k[by]+(by==="pts"?" 分":"")+'</span></div>').join("");
+    document.getElementById("hotNote").textContent = by==="pts" ? "Top 20 · 总分值" : by==="ny" ? "Top 20 · 覆盖年份" : "Top 20 · 主考点题数";
+  }
+  document.getElementById("order").addEventListener("change", drawHot);
+  drawHot();
+
+  const orphan = K.filter(k=>k.main===0).sort((a,b)=>b.n-a.n);
+  document.getElementById("orphanNote").textContent = orphan.length + " 个 · 共涉及 " + orphan.reduce((a,k)=>a+k.n,0) + " 题";
+  document.getElementById("orphan").innerHTML = orphan.map(k=>{
+    const ch = D.chapters.find(c=>c.id===k.ch);
+    return '<a class="chip'+(k.n?"":" muted")+'" href="bank.html?kp='+encodeURIComponent(k.name)+'" title="'+(ch?ch.name:"")+' · 涉及 '+k.n+' 题">'+
+      k.name+' <span class="muted">'+(k.n||"0")+'</span></a>';
+  }).join("");
+
+  document.getElementById("tierBox").innerHTML = ["必考","高频","中频","低频"].map(t =>
+    '<div class="card tight" style="background:var(--panel-2)"><div class="row"><span class="tier '+U.tierClass(t)+'">'+t+'</span><span class="small muted">'+({必考:"≥6 年",高频:"4—5 年",中频:"2—3 年",低频:"1 年"}[t])+'</span></div>'+
+    '<div style="font-size:24px;font-weight:650;margin-top:4px">'+tierCount[t]+' <span class="small muted">个</span></div>'+
+    '<div class="small muted">'+(t==="必考"?K.filter(k=>k.tier==="必考").slice(0,3).map(k=>k.name).join("、"):"")+'</div></div>').join("");
+
+  // 热力（只数主考点，避免多标签让某年某格虚高）
+  const years = [...new Set(Q.map(q=>q.year))].sort((a,b)=>a-b);
+  const top = [...K].sort((a,b)=>b.main-a.main).slice(0,12);
+  let h = "<thead><tr><th>考点</th>"+years.map(y=>"<th class='num'>"+y+"</th>").join("")+"<th class='num'>合计</th></tr></thead><tbody>";
+  top.forEach(k=>{
+    h += "<tr><td>"+k.name+"</td>";
+    years.forEach(y=>{
+      const n = Q.filter(q=>q.year===y && q.kp===k.name).length;
+      const a = n ? Math.min(.85, .16+n*.2) : 0;
+      h += '<td class="num" style="background:rgba(31,111,92,'+a+');color:'+(n>=3?"#fff":"inherit")+'">'+(n||"")+"</td>";
+    });
+    h += '<td class="num"><b>'+k.main+'</b></td></tr>';
+  });
+  h += "</tbody>";
+  document.getElementById("heat").innerHTML = h;
+
+  // 章节
+  const chs = D.chapters.map(c=>{
+    const qs = Q.filter(q=>q.ch===c.id);
+    return {name:c.no+" "+c.name, n:qs.length, pts:qs.reduce((a,q)=>a+q.pts,0)};
+  });
+  const mxc = Math.max(...chs.map(c=>c.n));
+  document.getElementById("chBox").innerHTML = chs.map(c=>
+    '<div class="bar-row" style="grid-template-columns:minmax(0,1fr) 72px 48px"><span class="nm wrap" title="'+c.name+'">'+c.name+'</span>'+
+    '<div class="bar"><i style="width:'+(c.n/mxc*100)+'%"></i></div><span class="num">'+c.n+' 题</span></div>').join("");
+
+  // 题型
+  const types = Object.entries(D.stats.type).sort((a,b)=>b[1]-a[1]);
+  const mxt = Math.max(...types.map(t=>t[1]));
+  document.getElementById("typeBox").innerHTML = types.map(([t,n])=>
+    '<div class="bar-row" style="grid-template-columns:80px 1fr 52px"><span class="nm">'+t+'</span>'+
+    '<div class="bar"><i style="width:'+(n/mxt*100)+'%"></i></div><span class="num">'+n+' 题</span></div>').join("");
+
+  const lv = Object.entries(D.stats.level).filter(([k])=>k);
+  document.getElementById("levelBox").innerHTML = '<div class="small muted" style="margin-bottom:6px">能力层级</div>'+
+    '<div class="pill-row">'+lv.map(([k,n])=>'<span class="chip">'+k+' <b>'+n+'</b></span>').join("")+'</div>';
+
+  // 全部考点表
+  let t = "<thead><tr><th>考点</th><th>章</th><th class='num'>主考</th><th class='num'>涉及</th><th class='num'>分值</th><th class='num'>年数</th><th>档</th></tr></thead><tbody>";
+  [...K].sort((a,b)=>b.main-a.main || b.n-a.n).forEach(k=>{
+    t += '<tr><td><a href="bank.html?kp='+encodeURIComponent(k.name)+'">'+k.name+'</a></td><td class="small muted">'+U.chShort(k.ch)+'</td>'+
+      '<td class="num"><b>'+k.main+'</b></td><td class="num">'+k.n+'</td><td class="num">'+k.pts+'</td><td class="num">'+k.ny+'</td>'+
+      '<td><span class="tier '+U.tierClass(k.tier)+'">'+k.tier+'</span></td></tr>';
+  });
+  document.getElementById("allKp").innerHTML = t + "</tbody>";
+})();
+</script>
+</body>
+</html>

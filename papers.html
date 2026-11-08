@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>八套卷 · 432 统计</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/app.css">
+<script>document.documentElement.setAttribute('data-theme',localStorage.getItem('ds432.theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))</script>
+</head>
+<body data-page="papers.html">
+<div class="shell">
+  <aside class="side"></aside>
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="sub">PAPERS · 按原卷顺序</div>
+        <h1>八套卷</h1>
+      </div>
+      <div class="actions"><button class="btn" id="themeBtn" title="切换主题">☀</button></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <p style="margin:0">按年份倒序。每套卷给三样东西：<b>结构</b>（哪几段、几题几分）、<b>考点分布</b>（这套卷压了哪些考点）、<b>题目清单</b>（点题号直进题库）。做题时建议整卷做，不要按考点拆——拆开会失去「连续 3 小时里换招」的训练。</p>
+    </div>
+
+    <div id="list"></div>
+
+    <footer class="foot">原卷来源：《西北大学432真题汇编_补全版》。2019—2021、2023 原卷分值不足 150 分，站点保留原始题型与题数，统计时按系数折算。</footer>
+  </main>
+</div>
+
+<script src="data/data.js"></script>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+U.boot("papers.html");
+(function(){
+  const D = window.DATA, P = D.papers, Q = D.qs;
+  document.getElementById("list").innerHTML = P.map(p=>{
+    const qs = Q.filter(q=>q.year===p.year);
+    const kpCnt = {};
+    qs.forEach(q=>{ if(q.kp) kpCnt[q.kp]=(kpCnt[q.kp]||0)+1; });
+    const top = Object.entries(kpCnt).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    const secRows = p.secs.map(s=>
+      '<tr><td>'+s.type+'</td><td class="num">'+s.n+'</td><td class="num">'+s.each+'</td><td class="num">'+s.sub+'</td></tr>').join("");
+    return '<div class="card" style="margin-bottom:14px">'+
+      '<div class="spread"><h2 style="margin:0">'+p.year+' 年<span class="muted small" style="font-weight:400;margin-left:10px">'+(p.note||"")+'</span></h2>'+
+      '<a class="btn primary sm" href="bank.html?year='+p.year+'">整卷练习 →</a></div>'+
+      '<div class="grid g2" style="margin-top:12px">'+
+        '<div><div class="tb-wrap"><table class="tb"><thead><tr><th>题型</th><th class="num">题数</th><th class="num">每题</th><th class="num">小计</th></tr></thead><tbody>'+secRows+
+        '<tr><td><b>合计</b></td><td class="num"><b>'+p.nq+'</b></td><td class="num">—</td><td class="num"><b>'+p.total+'</b></td></tr></tbody></table></div>'+
+        (p.scale!==1?'<div class="small muted" style="margin-top:6px">原始总分 '+p.total+' 分，折算系数 '+p.scale.toFixed(2)+'</div>':"")+
+        '<div class="small" style="margin-top:6px">已收录 <b>'+p.have+'</b> / '+p.nq+' 题'+
+          (p.gaps.length?' <span style="color:var(--warn)">（缺 '+p.gaps.map(g=>g.type+' '+g.have+'/'+g.n).join('、')+'）</span>':'')+'</div>'+'</div>'+
+        '<div><div class="small muted" style="margin-bottom:6px">这套卷压了什么</div>'+
+          top.map(([k,n])=>'<div class="spread" style="padding:3px 0"><a class="small" href="bank.html?kp='+encodeURIComponent(k)+'">'+k+'</a><span class="small muted">'+n+' 题</span></div>').join("")+
+        '</div>'+
+      '</div>'+
+      '<details style="margin-top:12px"><summary>题目清单（'+qs.length+' 题）</summary><div class="in"><div class="pill-row">'+
+        qs.sort((a,b)=>a.no-b.no).map(q=>'<a class="chip" style="text-decoration:none" href="bank.html?qid='+encodeURIComponent(q.id)+'" title="'+q.pts+'分 · '+(q.kp||"")+'">'+q.type+' '+q.no+'</a>').join("")+
+      '</div></div></details>'+
+      '</div>';
+  }).join("");
+})();
+</script>
+</body>
+</html>

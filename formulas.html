@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>公式手册 · 432 统计</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/app.css">
+<script>document.documentElement.setAttribute('data-theme',localStorage.getItem('ds432.theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))</script>
+<style>
+  .fcard{max-width:760px}
+  .fcard .fno{font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
+  .fcard .ftitle{font-family:var(--serif);font-size:20px;margin:6px 0 14px}
+  .fcard table th{width:120px;white-space:nowrap}
+  .fnav{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:14px;flex-wrap:wrap}
+  .fnav .cnt{font-family:var(--mono);font-size:12px;color:var(--ink-3);min-width:70px;text-align:center}
+</style>
+</head>
+<body data-page="formulas.html">
+<div class="shell">
+  <aside class="side"></aside>
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="sub">FORMULAS · 考前 10 分钟扫一遍</div>
+        <h1>公式手册</h1>
+      </div>
+      <div class="actions">
+        <input type="search" id="q" placeholder="搜分布 / 参数…" style="width:160px">
+        <button class="btn" id="modeBtn" title="切换表格 / 卡片">卡片模式</button>
+        <button class="btn" id="favBtn" title="只看收藏">收藏</button>
+        <button class="btn" id="themeBtn" title="切换主题">☀</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <p style="margin:0">五张表：常见分布、三大抽样分布、区间估计、假设检验、方差分析。来自《考点背诵手册》第三部分。<b>这张表要能默写，而不是查</b>——考场没有手册，只有你的手。卡片模式可逐条翻（键盘 ← →），★ 存本机。</p>
+      <div class="pill-row" id="jump" style="margin-top:10px"></div>
+    </div>
+
+    <div id="list" class="ftab"></div>
+    <div id="cardbox"></div>
+
+    <footer class="foot" id="foot"></footer>
+  </main>
+</div>
+
+<script src="data/data.js"></script>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+U.boot("formulas.html");
+(function(){
+  const F = window.DATA.formulas;
+  document.getElementById("foot").innerHTML = U.md("常考分位数：$u_{0.025}=1.96$、$u_{0.05}=1.645$、$u_{0.005}=2.58$；$\\chi^2$ 与 $t$、$F$ 的分位数通常随题给，不必硬背全表。");
+  const FK = "favformula";
+  let mode = new URLSearchParams(location.search).get("mode") === "card" ? "card" : "table", kw = "", onlyFav = false, cur = 0;
+
+  // 展开成 32 条
+  const items = [];
+  F.forEach((t,ti)=>t.rows.forEach((r,ri)=>items.push({id:"f"+ti+"-"+ri, ti:ti, ri:ri, title:t.title, head:t.head, row:r})));
+
+  const favs = () => U.get(FK, {});
+  const isFav = id => !!favs()[id];
+  function toggleFav(id){ const m = favs(); m[id] = !m[id]; U.set(FK, m); }
+
+  document.getElementById("jump").innerHTML = F.map((t,i)=>'<a class="chip" href="#f'+i+'">'+U.esc(t.title)+'</a>').join("");
+
+  function mdTable(t){
+    let s = "| " + t.head.join(" | ") + " |\n|" + t.head.map(()=>"---").join("|") + "|\n";
+    t.rows.forEach(r=>{ s += "| " + r.join(" | ") + " |\n"; });
+    return s;
+  }
+
+  function drawTable(){
+    document.getElementById("cardbox").innerHTML = "";
+    const list = F.filter(t=>!kw || (t.title+t.rows.flat().join(" ")).toLowerCase().includes(kw.toLowerCase()));
+    document.getElementById("list").innerHTML = list.map(t=>{
+      const i = F.indexOf(t);
+      return '<div class="card" id="f'+i+'" style="margin-bottom:14px"><div class="spread"><h3 style="margin:0">'+U.esc(t.title)+'</h3><span class="chip">'+t.rows.length+' 条</span></div><div style="margin-top:10px">'+U.md(mdTable(t))+'</div></div>';
+    }).join("") || '<div class="empty">没有匹配的公式</div>';
+  }
+
+  function pool(){
+    let p = items.filter(it=>!kw || (it.title + it.head.join(" ") + it.row.join(" ")).toLowerCase().includes(kw.toLowerCase()));
+    if (onlyFav) p = p.filter(it=>isFav(it.id));
+    return p;
+  }
+
+  function drawCard(){
+    document.getElementById("list").innerHTML = "";
+    const p = pool();
+    if (!p.length){
+      document.getElementById("cardbox").innerHTML = '<div class="empty">'+(onlyFav?'★ 里还没有公式。在卡片模式点右上角的星。':'没有匹配的公式')+'</div>';
+      return;
+    }
+    if (cur >= p.length) cur = 0;
+    const it = p[cur];
+    const body = it.head.map((h,i)=>'| '+h+' | '+(it.row[i]==null?"":it.row[i])+' |').join("\n");
+    document.getElementById("cardbox").innerHTML =
+      '<div class="card fcard"><div class="spread"><div><div class="fno">'+U.esc(it.title)+' · 第 '+(it.ri+1)+' 条</div>'+
+      '<div class="ftitle">'+U.esc(it.row[0])+(it.row[1]?' <span class="muted" style="font-size:15px">'+U.md(it.row[1]).replace(/^<p>/,"").replace(/<\/p>$/,"")+'</span>':"")+'</div></div>'+
+      '<span class="star'+(isFav(it.id)?" on":"")+'" data-fav="'+it.id+'" title="收藏">★</span></div>'+
+      '<div>'+U.md(body)+'</div>'+
+      '<div class="fnav"><button class="btn sm" data-go="-1"'+(cur===0?" disabled":"")+'>← 上一条</button>'+
+      '<span class="cnt">'+(cur+1)+' / '+p.length+'</span>'+
+      '<button class="btn sm" data-go="1"'+(cur===p.length-1?" disabled":"")+'>下一条 →</button>'+
+      '<button class="btn sm" id="rnd">随机一条</button>'+
+      (onlyFav?'<button class="btn sm" id="clearFav">退出收藏</button>':"")+'</div>'+
+      '<div class="small muted" style="text-align:center;margin-top:10px">键盘 ← → 也能翻。想按章跳，回表格模式点章节。</div></div>';
+
+    document.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click", ()=>{
+      cur = Math.max(0, Math.min(p.length-1, cur + (+b.getAttribute("data-go")))); drawCard();
+    }));
+    document.getElementById("rnd").addEventListener("click", ()=>{ cur = Math.floor(Math.random()*p.length); drawCard(); });
+    const cf = document.getElementById("clearFav");
+    if (cf) cf.addEventListener("click", ()=>{ onlyFav = false; document.getElementById("favBtn").classList.remove("on"); cur = 0; drawCard(); });
+    const st = document.querySelector("[data-fav]");
+    st.addEventListener("click", ()=>{ toggleFav(it.id); drawCard(); });
+  }
+
+  function draw(){
+    if (mode === "table") drawTable(); else drawCard();
+  }
+
+  document.getElementById("q").addEventListener("input", e=>{ kw = e.target.value.trim(); cur = 0; draw(); });
+  if (mode === "card") document.getElementById("modeBtn").textContent = "表格模式";
+  document.getElementById("modeBtn").addEventListener("click", (e)=>{
+    mode = mode === "table" ? "card" : "table";
+    e.currentTarget.textContent = mode === "table" ? "卡片模式" : "表格模式";
+    cur = 0; draw();
+  });
+  document.getElementById("favBtn").addEventListener("click", (e)=>{
+    onlyFav = !onlyFav; e.currentTarget.classList.toggle("on", onlyFav);
+    if (mode !== "card"){ mode = "card"; document.getElementById("modeBtn").textContent = "表格模式"; }
+    cur = 0; draw();
+  });
+  document.addEventListener("keydown", (e)=>{
+    if (mode !== "card") return;
+    const p = pool(); if (!p.length) return;
+    if (e.key === "ArrowRight"){ cur = Math.min(p.length-1, cur+1); drawCard(); }
+    if (e.key === "ArrowLeft"){ cur = Math.max(0, cur-1); drawCard(); }
+  });
+  draw();
+})();
+</script>
+</body>
+</html>

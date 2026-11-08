@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>破题诀 34 招 · 432 统计</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/app.css">
+<script>document.documentElement.setAttribute('data-theme',localStorage.getItem('ds432.theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))</script>
+<style>
+  .mv .hdline{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+  .mv .prog{display:flex;gap:10px;align-items:center;margin:8px 0 2px;font-size:11.5px;color:var(--ink-3)}
+  .mv .prog .bar{flex:1;height:6px;margin:0}
+  .mv.done{border-color:var(--ok)}
+  .mv .lad{border-top:1px dashed var(--line);margin-top:10px;padding-top:10px}
+  .mv .lad .row{flex-wrap:wrap}
+  .lvl{font-size:10.5px;padding:1px 6px;border-radius:4px;border:1px solid var(--line);color:var(--ink-3)}
+</style>
+</head>
+<body data-page="pojue.html">
+<div class="shell">
+  <aside class="side"></aside>
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="sub">AXIS 2 · 解题招法（全站唯一不按章节走的部分）</div>
+        <h1>破题诀 34 招</h1>
+      </div>
+      <div class="actions">
+        <input type="search" id="q" placeholder="搜招法 / 信号 / 考点…" style="width:190px">
+        <button class="btn" id="themeBtn" title="切换主题">☀</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <p style="margin:0">考纲目录是一棵树，解题是一张网。这一页是<b>轴二</b>：把 111 道真题按「你该做什么动作」而不是「它在第几章」重新切一遍。每招五件东西——<b>识别信号</b>、<b>固定动作</b>、<b>模板</b>、<b>陷阱</b>，以及<b>三段练</b>（基本功 → 中档 → 拔高，与阶梯练同一题）。真题按年份倒序列出，点开即跳题库。</p>
+      <div class="row" style="margin-top:12px">
+        <span class="small muted" style="margin-right:4px">留一手：</span>
+        <span class="chip on" data-scope="all">全显示</span>
+        <span class="chip" data-scope="3">留最近 3 年（模拟用）</span>
+        <span class="chip" data-scope="5">留最近 5 年</span>
+        <span class="chip" id="onlyUndone">只看还没练过的招</span>
+      </div>
+      <div class="filters" id="filters" style="margin-top:10px"></div>
+    </div>
+
+    <div id="list"></div>
+
+    <footer class="foot">招法编号与《432题型递进练习_93题》的 31 个题型一一对应（j01↔题型 1），所以每招下面直接挂了三段练。第 32 招（j32）是二维概率的专招；第 33 招（j33）是期望·方差·求和的运算地基（无偏性证明全靠它）；第 34 招（j34）管区间估计反求样本量。这三招都不对应单一题型，但每年的大题都用得上。点「已学会」只是自己记账（存本机），不参与任何评分。</footer>
+  </main>
+</div>
+
+<script src="data/data.js"></script>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+U.boot("pojue.html");
+(function(){
+  const D = window.DATA, J = D.pojue, Q = D.qs;
+  const LK = "learned";
+  let chap = "all", kw = "", scope = "all", onlyUndone = false;
+
+  const chs = D.chapters;
+  document.getElementById("filters").innerHTML =
+    '<span class="chip on" data-ch="all">全部 34 招</span>' +
+    chs.map(c=>'<span class="chip" data-ch="'+c.id+'">'+c.name+'</span>').join("");
+
+  document.querySelectorAll("[data-ch]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      document.querySelectorAll("[data-ch]").forEach(x=>x.classList.remove("on"));
+      el.classList.add("on"); chap = el.getAttribute("data-ch"); draw();
+    });
+  });
+  document.querySelectorAll("[data-scope]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      document.querySelectorAll("[data-scope]").forEach(x=>x.classList.remove("on"));
+      el.classList.add("on"); scope = el.getAttribute("data-scope"); draw();
+    });
+  });
+  document.getElementById("onlyUndone").addEventListener("click", (e)=>{
+    onlyUndone = !onlyUndone; e.currentTarget.classList.toggle("on", onlyUndone); draw();
+  });
+  document.getElementById("q").addEventListener("input", e=>{ kw = e.target.value.trim(); draw(); });
+
+  function kpChap(j){
+    for (const n of j.kps){ const k = U.kp(n); if (k) return k.ch; }
+    return null;
+  }
+  function learned(){ return U.get(LK, {}); }
+  function isLearned(id){ return !!learned()[id]; }
+
+  // 留一手：按年份上限裁掉真题
+  function visibleQs(j){
+    let qs = j.qids.map(id=>U.q(id)).filter(Boolean);
+    if (scope !== "all"){
+      const cut = new Date().getFullYear() - (+scope);
+      qs = qs.filter(q=>q.year <= cut);
+    }
+    return qs.sort((a,b)=>b.year-a.year);
+  }
+
+  function draw(){
+    const list = J.filter(j=>{
+      if (chap !== "all" && kpChap(j) !== chap) return false;
+      if (onlyUndone && isLearned(j.id)) return false;
+      if (!kw) return true;
+      const blob = (j.name+j.short+j.signal+j.steps.join("")+j.template+j.kps.join("")).toLowerCase();
+      return blob.includes(kw.toLowerCase());
+    });
+    if (!list.length) { document.getElementById("list").innerHTML = '<div class="empty">没有匹配的招</div>'; return; }
+
+    document.getElementById("list").innerHTML = list.map(j=>{
+      const qs = visibleQs(j);
+      const st = U.doneStat(j.qids);
+      const pct = st.n ? Math.round(st.done/st.n*100) : 0;
+      const lad = D.ladder.find(x=>x.no === j.no);
+      const lv = {};
+      (lad ? lad.items : []).forEach(it=>{ lv[it.level] = it; });
+      const cls = isLearned(j.id) ? " mv done" : " mv";
+      const idx = J.findIndex(x=>x.id===j.id);
+      const prev = J[idx-1], nextJ = J[idx+1];
+
+      return '<div class="'+cls.trim()+'" id="'+j.id+'">'+
+        '<div class="hdline"><h3><span class="mono small" style="color:var(--accent)">'+j.id+'</span> '+j.name+
+        ' <span class="muted small" style="font-weight:400">'+j.short+'</span></h3>'+
+        '<span class="row" style="gap:5px">'+(j.n? '<span class="chip">涉及 '+j.n+' 题 · '+j.pts+' 分</span>':'<span class="chip">综合</span>')+
+        (j.years.length?'<span class="chip">'+j.years[0]+'—'+j.years[j.years.length-1]+'</span>':"")+
+        '<button class="btn sm" data-learn="'+j.id+'">'+(isLearned(j.id)?"✓ 已学会":"标记已学会")+'</button></span></div>'+
+
+        '<div class="prog"><span>练过 '+st.done+' / '+st.n+'</span><span>做对 '+st.right+'</span>'+
+          '<span class="bar"><i style="width:'+pct+'%"></i></span><span>'+pct+'%</span></div>'+
+
+        '<div class="sig"><b style="color:var(--ink)">识别信号：</b>'+U.md(j.signal).replace(/^<p>|<\/p>$/g,"")+"</div>"+
+        '<div style="margin-top:10px"><div class="small" style="color:var(--ink-3);letter-spacing:1px;font-size:11px">固定动作</div><ol>'+j.steps.map(s=>"<li>"+U.md(String(s).replace(/^\s*[①②③④⑤⑥⑦⑧⑨]\s*/,"")).replace(/^<p>|<\/p>$/g,"")+"</li>").join("")+"</ol></div>"+
+        '<div class="small" style="color:var(--ink-3);letter-spacing:1px;font-size:11px">模板</div><div class="tpl">'+U.md(j.template).replace(/^<p>|<\/p>$/g,"")+"</div>"+
+        '<div class="small" style="color:var(--ink-3);letter-spacing:1px;font-size:11px;margin-top:8px">陷阱</div>'+
+        j.traps.map(t=>'<div class="trap">'+U.md(t).replace(/^<p>|<\/p>$/g,"")+"</div>").join("")+
+
+        (lad&&lad.items.length? '<div class="lad"><div class="small" style="color:var(--ink-3);letter-spacing:1px;font-size:11px">三段练（对应阶梯练第 '+j.no+' 组）</div><div class="row" style="gap:8px;margin-top:6px">'+
+          ["基础","中档","拔高"].filter(k=>lv[k]).map(k=>{
+            const it = lv[k];
+            return '<a class="chip" href="ladder.html#t'+j.no+'" title="'+U.esc(it.tag)+'"><span class="lvl">'+k+'</span> '+U.esc(it.tag.length>26?it.tag.slice(0,26)+"…":it.tag)+'</a>';
+          }).join("")+'</div></div>' : "")+
+
+        (qs.length? '<div class="small" style="color:var(--ink-3);letter-spacing:1px;font-size:11px;margin-top:10px">命中真题'+(scope!=="all"?"（已留起近 "+scope+" 年）":"")+'</div><div class="pill-row">'+
+          qs.map(q=>{ const s=U.qs.get(q.id); return '<a class="chip'+(s.acc===1?" acc":"")+(s.wrong?" warn":"")+'" style="text-decoration:none" href="bank.html?qid='+encodeURIComponent(q.id)+'">'+q.year+' '+q.type+' '+(q.kp||"")+'</a>'; }).join("")+"</div>"
+          : (scope!=="all" ? '<div class="small muted" style="margin-top:10px">近 '+scope+' 年的题已留起，可在「全显示」下查看。</div>' : ""))+
+
+        '<div class="sep"></div><div class="row small" style="flex-wrap:wrap;gap:6px">'+
+          (prev?'<a class="btn sm" href="#'+prev.id+'">← 上一招：'+prev.name+'</a>':"")+
+          (nextJ?'<a class="btn sm" href="#'+nextJ.id+'">下一招：'+nextJ.name+' →</a>':"")+
+          (j.next&&j.next.length? '<span class="muted" style="margin-left:6px">常转到：</span>'+j.next.map(id=>{ const t=J.find(x=>x.id===id); return t?'<a class="chip" href="#'+id+'">'+t.name+'</a>':""; }).join("") : "")+
+        "</div>"+
+        "</div>";
+    }).join("");
+
+    document.querySelectorAll("[data-learn]").forEach(b=>{
+      b.addEventListener("click", ()=>{
+        const id = b.getAttribute("data-learn");
+        const m = learned();
+        m[id] = !m[id];
+        U.set(LK, m);
+        draw();
+      });
+    });
+  }
+  draw();
+  if (location.hash) { const el = document.querySelector(location.hash); if (el) el.scrollIntoView(); }
+})();
+</script>
+</body>
+</html>

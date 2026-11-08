@@ -1,0 +1,170 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>432 统计 · 西大真题结构化题库</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/app.css">
+<script>document.documentElement.setAttribute('data-theme',localStorage.getItem('ds432.theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))</script>
+</head>
+<body data-page="index.html">
+<div class="shell">
+  <aside class="side"></aside>
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="sub">NORTHWEST UNIVERSITY · APPLIED STATISTICS · 432</div>
+        <h1>真题结构化题库</h1>
+      </div>
+      <div class="actions">
+        <a class="btn" href="bank.html">开始做题</a>
+        <button class="btn" id="themeBtn" title="切换主题">☀</button>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="spread" style="align-items:flex-start;gap:16px;flex-wrap:wrap">
+        <div>
+          <div class="small muted" style="letter-spacing:1.5px">距 2027 考研初试 · 2026 年 12 月 19 日</div>
+          <div id="cd" style="font-family:var(--serif);font-size:40px;line-height:1.15;margin:2px 0 0"></div>
+        </div>
+        <div class="row" style="gap:8px">
+          <a class="btn" href="bank.html">开始刷题</a>
+          <a class="btn" href="exam.html">组卷模考</a>
+          <a class="btn" href="pojue.html">破题诀</a>
+        </div>
+      </div>
+      <h1 style="margin-top:18px">八套卷，拆成 111 道题、40 个考点、34 招。</h1>
+      <p>不做第二本习题集，只把 2019—2026 的西大 432 真题拆到最小可训练单元：每道题挂五维标注（考点·知识模块·能力层级·分值·跨卷归属），每道题配解题、易错点、延伸与两道同源变式。两根轴正交——按考纲章节走一遍，再按解题招法走一遍。</p>
+      <div class="eq">∑</div>
+      <div class="pill-row" id="heroStats" style="margin-top:16px"></div>
+    </section>
+
+    <div class="grid g3" style="margin-bottom:18px">
+      <div class="card">
+        <div class="spread" style="margin-bottom:10px"><h3 style="margin:0">今日该做什么</h3><span class="chip acc" id="todayTag"></span></div>
+        <div id="todayList" class="small"></div>
+      </div>
+      <div class="card">
+        <div class="spread" style="margin-bottom:10px"><h3 style="margin:0">我的进度</h3><a class="small" href="review.html">复盘 →</a></div>
+        <div id="progBox"></div>
+      </div>
+      <div class="card">
+        <div class="spread" style="margin-bottom:10px"><h3 style="margin:0">考频最高</h3><a class="small" href="dashboard.html">大盘 →</a></div>
+        <div id="hotBox"></div>
+      </div>
+    </div>
+
+    <h2 style="margin-top:26px">板块</h2>
+    <div class="grid g3" id="entries"></div>
+
+    <h2 style="margin-top:34px">这个站点怎么组织的</h2>
+    <div class="grid g4">
+      <div class="card tight">
+        <div class="n mono small" style="color:var(--accent)">01 · 数据层</div>
+        <div style="font-weight:600;margin:2px 0 4px">题目是一等公民</div>
+        <div class="small muted">111 道真题每道带五维标注，另附解题、易错点、延伸、两道适配题。原始素材来自本机《真题深度教研分析（2019—2026）》。</div>
+      </div>
+      <div class="card tight">
+        <div class="n mono small" style="color:var(--accent)">02 · 索引层</div>
+        <div style="font-weight:600;margin:2px 0 4px">两根轴，不正交就白搭</div>
+        <div class="small muted">轴一按茆诗松 8 章 43 节 164 目切；轴二按 34 招解法切。同一道题在两轴上各出现一次，互为入口。</div>
+      </div>
+      <div class="card tight">
+        <div class="n mono small" style="color:var(--accent)">03 · 闭环</div>
+        <div style="font-weight:600;margin:2px 0 4px">错题 → 复习 → 诊断</div>
+        <div class="small muted">标错题进入 SM-2 复习队列；诊断按「正确率 × 考频」排序而不是错题数；弱考点回挂两根轴。</div>
+      </div>
+      <div class="card tight">
+        <div class="n mono small" style="color:var(--accent)">04 · 工具区</div>
+        <div style="font-weight:600;margin:2px 0 4px">背与练分开</div>
+        <div class="small muted">辨析卡管名词与概念（背诵手册 87 组）、公式手册管查、默写自测管输出，阶梯练管手感。</div>
+      </div>
+    </div>
+
+    <footer class="foot">
+      <div><b>数据来源</b>：本机《西北大学432真题汇编_补全版》《真题深度教研分析_2019-2026_精排版》《茆诗松第二版_考点背诵手册》《432题型递进练习_93题》《概率论与数理统计教程_知识点全录》。</div>
+      <div style="margin-top:4px">标注与统计口径见 <a href="dashboard.html">数据大盘</a> 页脚说明；个人数据只存在本机浏览器 localStorage。</div>
+    </footer>
+  </main>
+</div>
+
+<script src="data/data.js"></script>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+U.boot("index.html");
+(function(){
+  const D = window.DATA, m = D.meta;
+  document.getElementById("heroStats").innerHTML = [
+    ["真题", m.nq, "2019—2026 八套卷"],
+    ["考点", m.nkp, "茆诗松 8 章"],
+    ["破题诀", m.npojue, "轴二 · 解题招法"],
+    ["辨析", m.nconcept, "背诵手册"],
+    ["阶梯练", m.nladder, "31 题型"],
+    ["考纲目", m.nitem, "43 节"]
+  ].map(([k,v,s]) => '<span class="chip" style="padding:4px 11px"><b style="color:var(--ink)">'+k+'</b><b style="color:var(--accent);margin-left:4px">'+v+'</b><span class="muted" style="margin-left:6px">'+s+'</span></span>').join("");
+
+  document.getElementById("todayTag").textContent = U.today();
+  const dd = U.daysTo();
+  document.getElementById("cd").innerHTML = (dd > 0 ? "还有 <b>" + dd + "</b> 天" : "已开考");
+
+  // 今日清单
+  const due = U.srs.due().length, st = U.qs.stat();
+  const todo = [];
+  if (due) todo.push(["复习到期", due + " 题", "review.html"]);
+  if (st.wrong) todo.push(["错题未清", st.wrong + " 题", "bank.html?f=wrong"]);
+  const undone = m.nq - st.done;
+  if (undone > 0) todo.push(["真题未做", undone + " 题", "bank.html"]);
+  // 弱考点
+  const acc = {};
+  D.qs.forEach(q => { const s = U.qs.get(q.id); if (s.acc === undefined) return; (acc[q.kp] = acc[q.kp] || []).push(s.acc); });
+  const weak = Object.entries(acc).map(([k,v]) => [k, v.reduce((a,b)=>a+b,0)/v.length]).sort((a,b)=>a[1]-b[1]).slice(0,2);
+  if (weak.length) todo.push(["弱考点", weak.map(w=>w[0]).join(" / "), "review.html"]);
+  if (!todo.some(t=>t[0]==="今天先背")) todo.push(["今天先背", "辨析卡 ★★★ 27 组", "concepts.html"]);
+  if (todo.length < 3) todo.push(["没思路时", "破题诀 34 招（识别信号→固定动作）", "pojue.html"]);
+  if (todo.length < 4) todo.push(["先看清卷面", "八套卷结构与分值", "structure.html"]);
+  document.getElementById("todayList").innerHTML = todo.slice(0,4).map(([k,v,h]) =>
+    '<div class="spread" style="padding:6px 0;border-bottom:1px dashed var(--line)"><span class="muted">'+k+'</span><a href="'+h+'">'+v+' →</a></div>').join("");
+
+  // 进度
+  const p = Math.round(st.done / m.nq * 100);
+  document.getElementById("progBox").innerHTML =
+    '<div class="spread"><span class="small muted">做过真题</span><b style="font-variant-numeric:tabular-nums">'+st.done+' / '+m.nq+'</b></div>'+
+    '<div class="bar" style="height:8px;margin:8px 0 12px"><i style="width:'+p+'%"></i></div>'+
+    '<div class="row small"><span class="chip">错题 '+st.wrong+'</span><span class="chip">收藏 '+st.star+'</span><span class="chip">待复习 '+due+'</span></div>';
+
+  // 热门考点
+  const hot = [...D.kps].sort((a,b)=>b.main-a.main || b.n-a.n).slice(0,5);
+  const mx = hot[0] ? hot[0].main : 1;
+  document.getElementById("hotBox").innerHTML = hot.map(k =>
+    '<div class="bar-row" style="grid-template-columns:1fr 90px 46px"><span class="nm">'+k.name+'</span>'+
+    '<div class="bar"><i style="width:'+(k.main/mx*100)+'%"></i></div><span class="num">'+k.main+'题</span></div>').join("");
+
+  // 入口
+  const E = [
+    ["chapters.html","考纲树","8 章 · 43 节 · 164 目",m.nitem+" 条"],
+    ["pojue.html","破题诀 34 招","每招：识别信号 → 固定动作 → 三段练",m.npojue+" 招"],
+    ["graph.html","招法网络","34 招之间的转招路径",m.npojue+" 节点"],
+    ["bank.html","真题题库","按年 / 题型 / 章节 / 考点 / 层级筛选",m.nq+" 题"],
+    ["exam.html","组卷模考","按八套卷结构随机组卷 · 计时 · 自评",m.nq+" 题池"],
+    ["papers.html","八套卷","2019—2026 原始卷结构与分值","8 套"],
+    ["ladder.html","阶梯练","每个题型 基础→中档→拔高",m.nladder+" 题"],
+    ["concepts.html","辨析卡","名词解释与概念辨析，★★★ 27 组",m.nconcept+" 组"],
+    ["formulas.html","公式手册","分布表 / 区间估计 / 假设检验 / 方差分析",m.nformula+" 条"],
+    ["quiz.html","默写自测","遮挡答案，30 秒口述",m.nquiz+" 条"]
+  ];
+  document.getElementById("entries").innerHTML = E.map(([h,t,d,n]) =>
+    '<a class="entry" href="'+h+'"><div class="spread"><span class="t">'+t+'</span><span class="n">'+n+'</span></div><div class="d">'+d+'</div></a>').join("");
+})();
+</script>
+<script>/* auto-to-mobile：窄屏直接进手机版，避免电脑版在手机上挤成一团 */
+(function(){try{
+  if (sessionStorage.getItem('stayDesktop')==='1') return;
+  if (window.matchMedia('(max-width: 819px)').matches && !/mobile\.html/.test(location.href)){
+    location.replace('mobile.html');
+  }
+}catch(e){}})();</script>
+</body>
+</html>

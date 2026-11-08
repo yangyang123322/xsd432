@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>辨析卡 87 组 · 432 统计</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/app.css">
+<script>document.documentElement.setAttribute('data-theme',localStorage.getItem('ds432.theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))</script>
+<style>
+  .one{font-size:14.5px;font-family:var(--serif);border-left:3px solid var(--accent);padding:6px 12px;background:var(--accent-soft);border-radius:0 8px 8px 0;margin:8px 0}
+  .sec-h{font-size:11px;letter-spacing:1.2px;color:var(--ink-3);margin:12px 0 4px}
+  .hook{font-size:13px;color:var(--accent-2)}
+  .hook:before{content:"钩子 · ";color:var(--ink-3)}
+  .cc{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:16px 18px;margin-bottom:12px}
+  .cc h3{margin:0 0 2px;display:flex;gap:8px;align-items:baseline}
+  .cc .st{color:var(--gold);font-size:12px;letter-spacing:1px}
+</style>
+</head>
+<body data-page="concepts.html">
+<div class="shell">
+  <aside class="side"></aside>
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="sub">CONCEPTS · 六段式 · ★★★ 27 组</div>
+        <h1>辨析卡</h1>
+      </div>
+      <div class="actions">
+        <input type="search" id="q" placeholder="搜概念…" style="width:180px">
+        <button class="btn" id="themeBtn" title="切换主题">☀</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <p style="margin:0 0 10px">西大 432 的名词解释与判断题，考的不是背诵量，是<b>边界</b>。这 87 组来自《茆诗松第二版_考点背诵手册》，每组六段：一句话结论 → 定义卡 → 对比表 → 例子 → 得分点 → 钩子。星级是真题频次：<span class="st" style="color:var(--gold)">★★★</span> 八年 ≥3 次或每年必考、<b>★★</b> 出现 1—2 次、<b>★</b> 未考但茆书主干。</p>
+      <div class="filters" id="filters"></div>
+    </div>
+
+    <div id="list"></div>
+
+    <footer class="foot">背诵建议：★★★ 按 D1—D30 节奏滚，★★ 在第二轮过，★ 只在考前扫。每组的「钩子」是自测提示——看到钩子能说出整组，才算过。</footer>
+  </main>
+</div>
+
+<script src="data/data.js"></script>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+U.boot("concepts.html");
+(function(){
+  const C = window.DATA.concepts;
+  let ch = "all", st = 0, kw = "";
+
+  const chs = [...new Set(C.map(c=>c.ch))].sort((a,b)=>a-b);
+  document.getElementById("filters").innerHTML =
+    '<span class="chip on" data-ch="all">全部 87</span>'+
+    chs.map(c=>'<span class="chip" data-ch="'+c+'">第'+c+'章</span>').join("")+
+    '<span style="width:12px"></span>'+
+    [3,2,1].map(s=>'<span class="chip" data-st="'+s+'">'+"★".repeat(s)+' '+C.filter(c=>c.star===s).length+"</span>").join("");
+
+  document.querySelectorAll("[data-ch]").forEach(el=>el.addEventListener("click",()=>{
+    document.querySelectorAll("[data-ch]").forEach(x=>x.classList.remove("on")); el.classList.add("on");
+    ch = el.getAttribute("data-ch"); draw();
+  }));
+  document.querySelectorAll("[data-st]").forEach(el=>el.addEventListener("click",()=>{
+    const v = +el.getAttribute("data-st");
+    if (st === v){ st = 0; el.classList.remove("on"); } else { document.querySelectorAll("[data-st]").forEach(x=>x.classList.remove("on")); el.classList.add("on"); st = v; }
+    draw();
+  }));
+  document.getElementById("q").addEventListener("input", e=>{ kw = e.target.value.trim(); draw(); });
+
+  const NAMES = {"一句话":"","定义卡":"","对比表":"","例子":"","得分点":"","钩子":""};
+  function draw(){
+    const list = C.filter(c=>{
+      if (ch!=="all" && String(c.ch)!==ch) return false;
+      if (st && c.star!==st) return false;
+      if (kw){ const b=(c.title+c.one+c.sections.map(s=>s.body).join("")).toLowerCase(); if(!b.includes(kw.toLowerCase())) return false; }
+      return true;
+    });
+    document.getElementById("list").innerHTML = list.map(c=>{
+      let h = '<div class="cc"><h3><span class="mono small muted">【'+c.no+'】</span>'+U.esc(c.title)+'<span class="st">'+"★".repeat(c.star)+'</span><span class="chip">第'+c.ch+'章</span></h3>';
+      h += '<div class="one">'+U.md(c.one)+'</div>';
+      ["定义卡","对比表","例子","得分点"].forEach(n=>{
+        const s = c.sections.find(x=>x.name===n);
+        if (s) h += '<div class="sec-h">'+n+'</div>'+U.md(s.body);
+      });
+      if (c.hook) h += '<div class="sep"></div><div class="hook">'+U.md(c.hook).replace(/^<p>|<\/p>$/g,"")+'</div>';
+      return h+"</div>";
+    }).join("") || '<div class="empty">没有匹配的辨析卡</div>';
+  }
+  draw();
+})();
+</script>
+</body>
+</html>

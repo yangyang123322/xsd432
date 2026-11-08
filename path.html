@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>学习路径 · 432 统计</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .pgrid{display:grid; grid-template-columns:minmax(0,1fr); gap:14px; align-items:start}
+  .pgwrap{position:relative; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); overflow:auto}
+  svg#dag{display:block}
+  svg#dag text{font-family:var(--sans); font-size:9.6px; fill:var(--ink); pointer-events:none}
+  svg#dag .node{cursor:pointer}
+  svg#dag .node rect{fill:var(--panel); stroke:var(--line-2); stroke-width:1; transition:.15s}
+  svg#dag .node:hover rect{stroke:var(--accent); stroke-width:1.6}
+  svg#dag .node.on rect{fill:var(--accent); stroke:var(--accent)}
+  svg#dag .node.on text{fill:#fff}
+  svg#dag .node.up rect{stroke:var(--accent-2); stroke-width:1.6}
+  svg#dag .node.weak rect{stroke-dasharray:4 3}
+  svg#dag .link{stroke:#c9c2b4; stroke-width:1.1; fill:none; opacity:.9}
+  svg#dag .link.up{stroke:var(--accent-2); stroke-width:1.6; opacity:.95}
+  svg#dag .lvl{font-size:10.5px; fill:var(--ink-3); letter-spacing:1px}
+  .pinfo .kname{font-size:17px; font-weight:650; margin:2px 0 4px}
+  .chain{display:flex; flex-wrap:wrap; gap:5px; margin-top:6px}
+  .chain a{font-size:12px; text-decoration:none; padding:3px 8px; border:1px solid var(--line); border-radius:999px; color:var(--ink-2); background:var(--panel)}
+  .chain a:hover{border-color:var(--accent); color:var(--accent)}
+  .chain a.me{background:var(--accent); color:#fff; border-color:var(--accent)}
+  @media(max-width:860px){ .pgrid{grid-template-columns:1fr} }
+</style>
+</head>
+<body data-page="path.html">
+<div class="shell">
+  <aside class="side"></aside>
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="sub">AXIS 3 · 先学什么，再学什么</div>
+        <h1>学习路径</h1>
+      </div>
+      <div class="actions"><button class="btn" id="themeBtn" title="切换主题">☀</button></div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <p style="margin:0">前两根轴管「这题考什么」「这题怎么解」，这一页管<b>顺序</b>：箭头是「不懂 A 就做不动 B」的硬前置。左下角起手，越往右越靠后；点任意节点看它的前置链，链上有你没做的，就先回去补那一块。</p>
+      <div class="row" style="margin-top:12px;gap:8px;flex-wrap:wrap" id="kpi"></div>
+      <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
+        <span class="chip" id="onlyWeak">只看没做过的考点</span>
+        <span class="chip" id="onlyExam">只看有真题的考点</span>
+        <span class="chip" id="clearPick">取消选中</span>
+        <span class="small muted" style="margin-left:4px">虚线框 = 你还没做过相关真题</span>
+      </div>
+    </div>
+
+    <div class="pgrid">
+      <div class="pgwrap" id="wrap">
+        <svg id="dag" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div class="small muted" id="wideHint" style="display:none;margin-top:-6px">这张图比手机宽：左右滑动看全图，点节点看它的前置链。</div>
+      <div class="card pinfo" id="pinfo">
+        <div class="small muted">点图上一个考点</div>
+        <div class="kname">未选择</div>
+        <div class="small muted">它的前置链、后继、真题数都会出现在这里。</div>
+      </div>
+      <div class="card">
+        <div class="small muted" style="line-height:1.9">
+          读法：竖着从上往下是「先学 → 后学」，箭头从被依赖的那一端指出来；<b>虚线框</b> 表示你还没做过这个考点的题；点一个节点，它的整条上游链会变成橙色，链上有虚线的，就是该回头补的那一块。这一页只收「不懂 A 就做不动 B」的硬前置：40 个考点、60 条边、13 层，两个起步点。
+        </div>
+      </div>
+    </div>
+
+    <footer class="foot" id="foot"></footer>
+  </main>
+</div>
+
+<script src="data/data.js"></script>
+<script src="data/prereq.js"></script>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+U.boot("path.html");
+(function(){
+  const D = window.DATA, PR = D.prereq || [], K = D.kps;
+  const byName = {}; K.forEach(k=>byName[k.name]=k);
+  const preOf = {}, nextOf = {};
+  PR.forEach(p=>{ preOf[p.kp] = p.pre.slice(); p.pre.forEach(x=>(nextOf[x]=nextOf[x]||[]).push(p.kp)); });
+
+  // 缺边检查：数据里存在但 prereq 里没有的考点，当作根节点
+  const missing = K.filter(k=>!preOf[k.name]).map(k=>k.name);
+  if (missing.length) missing.forEach(n=>{ preOf[n]=[]; });
+
+  // 层级 = 最长前置链（Kahn 拓扑 + 取最长）
+  const lvl = {};
+  const walk = (n, seen) => {
+    if (lvl[n] != null) return lvl[n];
+    if (seen.has(n)) return 0;
+    seen.add(n);
+    const ps = preOf[n] || [];
+    lvl[n] = ps.length ? 1 + Math.max(...ps.map(p=>walk(p, seen))) : 0;
+    return lvl[n];
+  };
+  K.forEach(k=>walk(k.name, new Set()));
+
+  const order = K.map(k=>k.name).sort((a,b)=> lvl[a]-lvl[b] || a.localeCompare(b,"zh"));
+  const byLvl = {};
+  order.forEach(n=>{ (byLvl[lvl[n]] = byLvl[lvl[n]]||[]).push(n); });
+
+  // 坐标：竖向分层（层从上到下），层内横向居中排列
+  const NW = 118, NH = 30, GX = 126, GY = 64, PAD = 22;
+  const maxRows = Math.max(...Object.values(byLvl).map(a=>a.length));
+  const maxLvl = Math.max(...Object.values(lvl));
+  const pos = {};
+  Object.entries(byLvl).forEach(([l, arr])=>{
+    const total = arr.length;
+    const left = PAD + 44 + ((maxRows - total) * GX) / 2;
+    arr.forEach((n, i)=>{ pos[n] = { x: left + i*GX, y: PAD + l*GY }; });
+  });
+  const W = PAD*2 + 44 + maxRows*GX, H = PAD*2 + maxLvl*GY + NH + 12;
+
+  const svg = document.getElementById("dag");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("width", W); svg.setAttribute("height", H);
+
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  const done = n => { const k = byName[n]; if (!k) return false; const qs = D.qs.filter(q=>q.kp===n); return qs.some(q=>{ const s = U.qs.get(q.id); return s && s.acc !== undefined; }); };
+
+  const gLink = el("g", {}), gNode = el("g", {});
+  svg.appendChild(gLink); svg.appendChild(gNode);
+
+  // 层级标尺（左侧竖排）
+  Object.entries(byLvl).forEach(([l])=>{
+    const t = el("text", { x: 10, y: PAD + l*GY + NH/2 + 4, class: "lvl" });
+    t.textContent = "第" + (+l + 1) + "层";
+    svg.appendChild(t);
+  });
+
+  const linkMap = {};
+  let edgeN = 0;
+  PR.forEach(p=>{
+    (p.pre||[]).forEach(pn=>{
+      if (!pos[pn] || !pos[p.kp]) return;
+      const a = pos[pn], b = pos[p.kp];
+      const x1 = a.x + NW/2, y1 = a.y + NH, x2 = b.x + NW/2, y2 = b.y;
+      const my = (y1 + y2) / 2;
+      const path = el("path", { d: `M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${y2}`, class: "link" });
+      path.dataset.from = pn; path.dataset.to = p.kp;
+      gLink.appendChild(path);
+      linkMap[pn + "→" + p.kp] = path;
+      edgeN++;
+    });
+  });
+
+  const nodeEls = {};
+  K.forEach(k=>{
+    const p = pos[k.name]; if (!p) return;
+    const g = el("g", { class: "node" + (done(k.name) ? "" : " weak"), transform: `translate(${p.x},${p.y})` });
+    g.dataset.kp = k.name;
+    g.appendChild(el("rect", { width: NW, height: NH, rx: 8 }));
+    const txt = el("text", { x: 8, y: NH/2 + 4 });
+    txt.textContent = k.name.length > 10 ? k.name.slice(0, 10) + "…" : k.name;
+    g.appendChild(txt);
+    const ttl = el("title", {}); ttl.textContent = k.name + " · 主考点 " + k.main + " 题 / 涉及 " + k.n + " 题";
+    g.appendChild(ttl);
+    g.addEventListener("click", ()=> select(k.name));
+    gLink.parentNode && gNode.appendChild(g);
+    nodeEls[k.name] = g;
+  });
+
+  // 上游闭包
+  function ancestors(n, acc){
+    acc = acc || new Set();
+    (preOf[n]||[]).forEach(p=>{ if (!acc.has(p)) { acc.add(p); ancestors(p, acc); } });
+    return acc;
+  }
+
+  let picked = null;
+  function select(n){
+    picked = n;
+    Object.values(nodeEls).forEach(e=>e.classList.remove("on","up"));
+    Object.values(linkMap).forEach(e=>e.classList.remove("up"));
+    const up = ancestors(n);
+    up.forEach(p=>{ if (nodeEls[p]) nodeEls[p].classList.add("up"); });
+    Object.entries(linkMap).forEach(([key, path])=>{
+      const [from, to] = key.split("→");
+      if (up.has(from) && (up.has(to) || to === n)) path.classList.add("up");
+    });
+    if (nodeEls[n]) nodeEls[n].classList.add("on");
+    paintPanel(n, up);
+  }
+
+  function paintPanel(n, up){
+    const k = byName[n] || {name:n, main:0, n:0, ch:""};
+    const qs = D.qs.filter(q=>q.kp===n);
+    const ch = D.chapters.find(c=>c.id===k.ch) || {no:"", name:""};
+    const nxt = nextOf[n] || [];
+    const chain = [...up].sort((a,b)=> lvl[a]-lvl[b]);
+    const p = {};
+    const hits = [];
+    D.pojue.forEach(j=>{ if ((j.kps||[]).indexOf(n) >= 0) hits.push(j); });
+    document.getElementById("pinfo").innerHTML =
+      '<div class="small muted">'+U.esc(ch.no)+' · '+U.esc(ch.name)+'</div>'+
+      '<div class="kname">'+U.esc(n)+'</div>'+
+      '<div class="row small" style="gap:6px;flex-wrap:wrap;margin-bottom:10px">'+
+        '<span class="chip">主考点 '+k.main+' 题</span><span class="chip">涉及 '+k.n+' 题</span>'+
+        '<span class="chip">'+qs.length+' 道原题</span><span class="chip">第 '+(lvl[n]+1)+' 层</span></div>'+
+      (PR.find(x=>x.kp===n && x.note) ? '<div class="small" style="border-left:2px solid var(--accent-2); padding-left:8px; margin-bottom:10px">'+U.esc(PR.find(x=>x.kp===n).note)+'</div>' : "")+
+      '<div class="small muted">直接前置（'+(preOf[n]||[]).length+'）</div>'+
+      '<div class="chain">'+((preOf[n]||[]).map(x=>'<a href="#" data-go="'+U.esc(x)+'">'+U.esc(x)+'</a>').join("") || '<span class="small muted">没有前置，可以从这里起步</span>')+'</div>'+
+      '<div class="small muted" style="margin-top:12px">完整前置链（'+(chain.length-0)+'，按层排）</div>'+
+      '<div class="chain">'+(chain.length ? chain.map(x=>'<a href="#" data-go="'+U.esc(x)+'">'+U.esc(x)+'</a>').join("") : '<span class="small muted">—</span>')+'</div>'+
+      '<div class="small muted" style="margin-top:12px">学完这个，往下走（'+nxt.length+'）</div>'+
+      '<div class="chain">'+(nxt.length ? nxt.map(x=>'<a href="#" data-go="'+U.esc(x)+'">'+U.esc(x)+'</a>').join("") : '<span class="small muted">—</span>')+'</div>'+
+      '<div class="row" style="margin-top:14px;gap:8px;flex-wrap:wrap">'+
+        '<a class="btn sm" href="bank.html?kp='+encodeURIComponent(n)+'">去题库练这个考点</a>'+
+        (hits.length ? '<a class="btn sm" href="pojue.html#'+hits[0].id+'">看破题诀：'+U.esc(hits[0].name)+'</a>' : "")+
+        '<a class="btn sm" href="chapters.html">回考纲树</a>'+
+      '</div>';
+    document.querySelectorAll("#pinfo [data-go]").forEach(a=>a.addEventListener("click", ev=>{ ev.preventDefault(); select(a.getAttribute("data-go")); }));
+  }
+
+  // 筛选
+  let weakOnly = false, examOnly = false;
+  const apply = () => {
+    K.forEach(k=>{
+      const g = nodeEls[k.name]; if (!g) return;
+      const okWeak = !weakOnly || !done(k.name);
+      const okExam = !examOnly || k.n > 0;
+      g.style.display = (okWeak && okExam) ? "" : "none";
+    });
+    Object.values(linkMap).forEach(p=>{
+      const from = p.dataset.from, to = p.dataset.to;
+      const vis = n => { const g = nodeEls[n]; return g && g.style.display !== "none"; };
+      p.style.display = (vis(from) && vis(to)) ? "" : "none";
+    });
+  };
+  document.getElementById("onlyWeak").addEventListener("click", e=>{ weakOnly = !weakOnly; e.currentTarget.classList.toggle("on", weakOnly); apply(); });
+  document.getElementById("onlyExam").addEventListener("click", e=>{ examOnly = !examOnly; e.currentTarget.classList.toggle("on", examOnly); apply(); });
+  document.getElementById("clearPick").addEventListener("click", ()=>{
+    picked = null;
+    Object.values(nodeEls).forEach(e=>e.classList.remove("on","up"));
+    Object.values(linkMap).forEach(e=>e.classList.remove("up"));
+    document.getElementById("pinfo").innerHTML = '<div class="small muted">点图上一个考点</div><div class="kname">未选择</div><div class="small muted">它的前置链、后继、真题数都会出现在这里。</div>';
+  });
+
+  // KPI
+  const roots = K.filter(k=>(preOf[k.name]||[]).length===0);
+  document.getElementById("kpi").innerHTML = [
+    ["考点", K.length, "个"],
+    ["前置关系", edgeN, "条"],
+    ["层级", maxLvl+1, "层"],
+    ["起步考点", roots.length, "个"]
+  ].map(([k,v,u])=>'<span class="chip" style="padding:4px 11px"><b style="color:var(--ink)">'+k+'</b><b style="color:var(--accent);margin-left:5px">'+v+'</b><span class="muted" style="margin-left:5px">'+u+'</span></span>').join("");
+
+  document.getElementById("foot").innerHTML = U.md("前置关系由作者按茆诗松第二版的章节依赖手工标注（40 个考点、"+edgeN+" 条边），只收「硬前置」；同一考点在破题诀与题库里另有入口。");
+  if (window.innerWidth <= 860) document.getElementById("wideHint").style.display = "block";
+  apply();
+})();
+</script>
+</body>
+</html>

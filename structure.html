@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>命题结构 · 432 统计</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/app.css">
+<script>document.documentElement.setAttribute('data-theme',localStorage.getItem('ds432.theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))</script>
+</head>
+<body data-page="structure.html">
+<div class="shell">
+  <aside class="side"></aside>
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="sub">PAPER STRUCTURE · 150 分制</div>
+        <h1>命题结构</h1>
+      </div>
+      <div class="actions"><button class="btn" id="themeBtn" title="切换主题">☀</button></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <p style="margin-top:0">八套卷的题型不是逐年稳定的：2019—2021 是「填空 + 计算」两段式，2022 起名词解释进入试卷，2024 改叫「解答」，2025 加回证明题并出现 5 道名词解释，2026 把名词解释换成了「辨析」并让证明题占 30 分。<b>题型在变，考点没变</b>——所以本站在结构页只关心三件事：每套卷由哪几段构成、每段多少分、这些分落在哪些章节。</p>
+      <div class="pill-row" id="sum"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-top:0">八套卷结构</h3>
+      <div class="tb-wrap"><table class="tb" id="paperTab"></table></div>
+      <div class="small muted" style="margin-top:10px">「折算」列 = 150 ÷ 原始总分；套卷的原始分值与 150 分制不符时（原卷不全或回忆版），统计改用折算系数。</div>
+    </div>
+
+    <div id="gapBox"></div>
+
+    <div class="grid g2">
+      <div class="card">
+        <h3 style="margin-top:0">题型演化</h3>
+        <div id="evo"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">分值去向</h3>
+        <div id="ptsByType"></div>
+        <div class="sep"></div>
+        <div class="small muted">按已收录题目的实际分值统计：111 题合计 1154 分（结构总分为 1188 分，差 34 分是 7 道未收录题）。计算/解答题占绝对主体，填空稳定在 20—30 分，名词解释/辨析稳定在 10—30 分。</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-top:0">每套卷的题目清单</h3>
+      <div id="yearList"></div>
+    </div>
+
+    <footer class="foot">结构数据取自《西北大学432真题汇编_补全版》每套卷开头的题型分值表；题号与分值由解析脚本按题型段自动派生。</footer>
+  </main>
+</div>
+
+<script src="data/data.js"></script>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+U.boot("structure.html");
+(function(){
+  const D = window.DATA, P = D.papers, Q = D.qs;
+  const years = P.map(p=>p.year);
+  const allTypes = [...new Set(P.flatMap(p=>p.secs.map(s=>s.type)))];
+
+  document.getElementById("sum").innerHTML = [
+    ["套卷", P.length],["原始总分合计", P.reduce((a,p)=>a+p.total,0)],
+    ["题数", Q.length],["题型种数", allTypes.length]
+  ].map(([k,v])=>'<span class="chip">'+k+' <b style="margin-left:4px">'+v+'</b></span>').join("");
+
+  let h = "<thead><tr><th>年份</th>"+allTypes.map(t=>"<th class='num'>"+t+"</th>").join("")+"<th class='num'>结构题数</th><th class='num'>已收录</th><th class='num'>原始总分</th><th class='num'>折算</th></tr></thead><tbody>";
+  P.forEach(p=>{
+    h += "<tr><td><b>"+p.year+"</b></td>";
+    allTypes.forEach(t=>{
+      const s = p.secs.find(x=>x.type===t);
+      h += '<td class="num">'+(s? s.n+"×"+s.each : '<span class="muted">—</span>')+"</td>";
+    });
+    h += '<td class="num">'+p.nq+'</td><td class="num" style="color:'+(p.have<p.nq?"var(--warn)":"inherit")+'">'+p.have+'</td><td class="num">'+p.total+'</td><td class="num">'+(p.scale===1?"1.00":p.scale.toFixed(2))+'</td></tr>';
+  });
+  document.getElementById("paperTab").innerHTML = h+"</tbody>";
+
+  // 缺口
+  const gaps = P.filter(p=>p.gaps.length);
+  if (gaps.length){
+    document.getElementById("gapBox").innerHTML = '<div class="card" style="margin-bottom:16px;border-color:var(--warn)">'+
+      '<h3 style="margin-top:0">数据缺口（'+(D.meta.nqStruct-D.meta.nq)+' 题）</h3>'+
+      '<div class="small">结构上八套卷共 '+D.meta.nqStruct+' 题，本站实际收录 '+D.meta.nq+' 题。缺口的来源是《真题深度教研分析》里这几段没有逐题拆解，不是漏抓：</div>'+
+      '<div style="margin-top:8px">'+gaps.map(p=>'<div class="spread" style="padding:5px 0;border-bottom:1px dashed var(--line)"><span><b>'+p.year+'</b></span><span class="small muted">'+
+        p.gaps.map(g=>g.type+" 结构 "+g.n+" / 收录 "+g.have).join("；")+'</span></div>').join("")+'</div>'+
+      '<div class="small muted" style="margin-top:8px">另有 '+D.meta.nMissStem+' 题原卷题干缺失、'+D.meta.nMissSol+' 题源文件未给解析（多集中在 2019 年），题库里已用「题干缺失 / 无解析」标出。补这些题需要回原卷扫描件，属于后续工作。</div>'+
+      '</div>';
+  }
+
+  // 演化：每类题型的年份覆盖
+  document.getElementById("evo").innerHTML = allTypes.map(t=>{
+    const ys = P.filter(p=>p.secs.some(s=>s.type===t)).map(p=>p.year);
+    return '<div class="spread" style="padding:6px 0;border-bottom:1px dashed var(--line)">'+
+      '<b style="font-size:13.5px">'+t+'</b><span class="small muted">'+ys.join(" · ")+' <span class="chip" style="margin-left:6px">'+ys.length+'/8 套</span></span></div>';
+  }).join("");
+
+  // 分值去向
+  const byType = {};
+  Q.forEach(q=>{ byType[q.type] = (byType[q.type]||0) + q.pts; });
+  const arr = Object.entries(byType).sort((a,b)=>b[1]-a[1]);
+  const mx = arr[0][1];
+  document.getElementById("ptsByType").innerHTML = arr.map(([t,v])=>
+    '<div class="bar-row" style="grid-template-columns:84px 1fr 64px"><span class="nm">'+t+'</span>'+
+    '<div class="bar"><i style="width:'+(v/mx*100)+'%"></i></div><span class="num">'+v+' 分</span></div>').join("");
+
+  // 每年题目清单
+  document.getElementById("yearList").innerHTML = P.map(p=>{
+    const qs = Q.filter(q=>q.year===p.year);
+    const groups = {};
+    qs.forEach(q=>{ (groups[q.type]=groups[q.type]||[]).push(q); });
+    const inner = Object.entries(groups).map(([t,list])=>
+      '<div style="margin:8px 0"><span class="chip">'+t+'</span> '+
+      list.map(q=>'<a class="chip" style="text-decoration:none" href="bank.html?qid='+encodeURIComponent(q.id)+'">'+q.id.replace(p.year+"-"+t+"-",t+'-')+' · '+(q.kp||"未标注")+'</a>').join(" ")+"</div>").join("");
+    return '<details><summary><b>'+p.year+'</b><span class="muted small" style="margin-left:8px">'+p.total+' 分 · '+qs.length+' 题 · '+(p.note||"")+'</span></summary><div class="in">'+inner+"</div></details>";
+  }).join("");
+})();
+</script>
+</body>
+</html>

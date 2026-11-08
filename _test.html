@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>selftest</title></head>
+<body>
+<pre id="out"></pre>
+<script src="data/data.js"></script>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+const L = [];
+function ok(name, cond, extra){ L.push((cond?"PASS ":"FAIL ")+name+(extra!==undefined?"  ["+extra+"]":"")); }
+
+// 1. markdown + katex
+const h1 = U.md("设 $X\\sim N(0,1)$，则 **E** $X=0$");
+ok("md-inline-math", h1.includes("katex") && h1.includes("<strong>E</strong>"), h1.slice(0,80));
+const h2 = U.md("$$\\int_0^1 x dx = \\frac12$$");
+ok("md-display-math", h2.includes("katex-display"), h2.slice(0,60));
+const h3 = U.md("| a | b |\n|---|---|\n| 1 | 2 |");
+ok("md-table", h3.includes("<table") && h3.includes("<th>a</th>"), h3.slice(0,60));
+const h4 = U.md("- 甲\n- 乙");
+ok("md-list", (h4.match(/<li>/g)||[]).length===2);
+const h5 = U.md("普通文本\n第二行");
+ok("md-paragraph", h5.includes("<p>") && !h5.includes("<br>"));
+
+// 2. srs 序列
+U.del("srs");
+let s1 = U.srs.grade("T-1","good");
+let s2 = U.srs.grade("T-1","good");
+let s3 = U.srs.grade("T-1","good");
+ok("srs-grow", s1.interval===1 && s2.interval===3 && s3.interval>3, [s1.interval,s2.interval,s3.interval].join(","));
+let s4 = U.srs.grade("T-1","again");
+ok("srs-lapse", s4.interval===0 && s4.reps===0 && s4.ef<2.5, "ef="+s4.ef.toFixed(2));
+ok("srs-due-today-or-past", U.srs.due().includes("T-1"), U.srs.due().join(","));
+
+// 3. qcard
+const q = DATA.qs[0];
+const c = U.qcard(q, {});
+ok("qcard-id", c.includes('data-id="'+q.id+'"'));
+ok("qcard-chips", c.includes("chip"));
+ok("qcard-katex-or-text", c.length>200, c.length);
+
+// 4. 查询辅助
+ok("kp-lookup", !!U.kp(DATA.kps[0].name));
+ok("ch-name", U.chName(DATA.kps[0].ch).startsWith("第"), U.chName(DATA.kps[0].ch));
+
+// 5. 题目状态
+U.del("qstate");
+U.qs.patch(q.id, {wrong:true});
+ok("qs-wrong", U.qs.wrongIds().includes(q.id));
+U.qs.patch(q.id, {acc:1});
+ok("qs-merge", U.qs.get(q.id).wrong===true && U.qs.get(q.id).acc===1);
+
+// 6. 数据完整性
+ok("data-q-111", DATA.qs.length===111, DATA.qs.length);
+ok("data-kp-40", DATA.kps.length===40, DATA.kps.length);
+ok("data-pojue-34", DATA.pojue.length>=34, DATA.pojue.length);
+ok("data-concepts-87", DATA.concepts.length===87, DATA.concepts.length);
+ok("data-ladder-93", DATA.ladder.reduce((a,t)=>a+t.items.length,0)===93, DATA.ladder.reduce((a,t)=>a+t.items.length,0));
+ok("data-quiz-60", DATA.quiz.length===60, DATA.quiz.length);
+ok("data-outline", DATA.outline.length===8);
+const noKp = DATA.qs.filter(x=>!x.kp);
+ok("known-missing-no-kp", noKp.every(x=>x.missStem) && noKp.length===2, noKp.map(x=>x.id).join(","));
+ok("miss-sol-count", DATA.qs.filter(x=>!x.sol).length===DATA.meta.nMissSol, DATA.meta.nMissSol);
+const kpBad = DATA.qs.filter(x=>x.kp && !DATA.kps.some(k=>k.name===x.kp));
+ok("kp-names-consistent", kpBad.length===0, kpBad.map(x=>x.id).join(","));
+const structTotal = DATA.papers.reduce((a,p)=>a+p.total,0);
+ok("paper-struct-total", structTotal===1188 && DATA.meta.nqStruct===118, [structTotal, DATA.meta.nqStruct]);
+ok("gap-accounted", structTotal - DATA.qs.reduce((a,q)=>a+q.pts,0) === 34);
+const qPts = DATA.qs.reduce((a,q)=>a+q.pts,0);
+ok("q-pts-sum", qPts===1154, qPts);
+
+document.getElementById("out").textContent = L.join("\n");
+document.title = L.filter(x=>x.startsWith("FAIL")).length ? "FAILED" : "ALLPASS";
+</script>
+</body></html>

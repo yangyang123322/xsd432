@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>默写自测 · 432 统计</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/app.css">
+<script>document.documentElement.setAttribute('data-theme',localStorage.getItem('ds432.theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))</script>
+<style>
+  .qi{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px dashed var(--line);cursor:pointer}
+  .qi .no{font-family:var(--mono);font-size:12px;color:var(--ink-3);width:26px;flex:none;padding-top:2px}
+  .qi .tx{flex:1;font-size:14px}
+  .qi .mark{flex:none;font-size:11px;padding:1px 7px;border-radius:5px;background:var(--bg-soft);color:var(--ink-3)}
+  .qi.ok .mark{background:rgba(31,122,77,.14);color:var(--ok)}
+  .qi.bad .mark{background:rgba(179,52,31,.12);color:var(--warn)}
+  .qi.ok .tx{color:var(--ink-2)}
+  .big{font-size:26px;font-weight:650;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body data-page="quiz.html">
+<div class="shell">
+  <aside class="side"></aside>
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="sub">RECALL · 遮住答案，30 秒口述</div>
+        <h1>默写自测</h1>
+      </div>
+      <div class="actions">
+        <button class="btn" id="btnRandom">抽 10 条</button>
+        <button class="btn" id="btnClear">清空记录</button>
+        <button class="btn" id="themeBtn" title="切换主题">☀</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div class="grid g4" id="kpi"></div>
+      <p class="small muted" style="margin:10px 0 0">用法：每天抽 10 条，能「一口气说出定义 + 判据 + 一个反例」才算过。点条目切换 <b>会</b> / <b>不会</b>，记录只存在本机。答不上的回 <a href="concepts.html">辨析卡</a> 找对应编号。</p>
+    </div>
+
+    <div id="list"></div>
+
+    <footer class="foot">清单来自《考点背诵手册》第四部分，共 60 条，按章分组。</footer>
+  </main>
+</div>
+
+<script src="data/data.js"></script>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+U.boot("quiz.html");
+(function(){
+  const QZ = window.DATA.quiz;
+  const KEY = "quiz", rec = U.get(KEY, {});
+  let mode = "all";   // all | random
+  let pool = [];      // 抽签抽中的 10 条，固定住，避免每次重绘都洗牌
+
+  function stat(){
+    const ok = Object.values(rec).filter(v=>v===1).length;
+    const bad = Object.values(rec).filter(v=>v===0).length;
+    return {ok, bad, done: ok+bad, left: QZ.length-ok-bad};
+  }
+  function kpi(){
+    const s = stat();
+    document.getElementById("kpi").innerHTML = [
+      ["总条数", QZ.length, "8 章"], ["已过", s.ok, "口述通过"],
+      ["标记不会", s.bad, "回辨析卡"], ["未测", s.left, "待抽"]
+    ].map(([k,v,h])=>'<div class="kpi"><div class="k">'+k+'</div><div class="v">'+v+'</div><div class="h">'+h+'</div></div>').join("");
+  }
+
+  function itemHtml(q){
+    const v = rec[q.no];
+    const cls = v===1?" ok": v===0?" bad": "";
+    return '<div class="qi'+cls+'" data-no="'+q.no+'"><div class="no">'+q.no+'</div><div class="tx">'+U.esc(q.q)+'</div>'+
+      '<div class="mark">'+(v===1?"会":v===0?"不会":"待测")+'</div></div>';
+  }
+
+  function draw(){
+    let groups = {};
+    if (mode === "random"){
+      groups = {"随机抽 10 条": pool};
+    } else {
+      QZ.forEach(q=>{ (groups["第"+q.ch+"章"] = groups["第"+q.ch+"章"]||[]).push(q); });
+    }
+    document.getElementById("list").innerHTML = Object.entries(groups).map(([k,list])=>
+      '<div class="card" style="margin-bottom:12px"><div class="spread" style="margin-bottom:6px"><h3 style="margin:0">'+k+'</h3><span class="small muted">'+list.length+' 条</span></div>'+
+      list.map(itemHtml).join("")+"</div>").join("");
+    document.querySelectorAll(".qi").forEach(el=>{
+      el.addEventListener("click", ()=>{
+        const no = el.getAttribute("data-no");
+        const cur = rec[no];
+        // 待测 → 会 → 不会 → 待测（点错了能转回来）
+        if (cur === undefined) rec[no] = 1;
+        else if (cur === 1) rec[no] = 0;
+        else delete rec[no];
+        U.set(KEY, rec); draw();
+      });
+    });
+    kpi();
+  }
+
+  document.getElementById("btnRandom").addEventListener("click", ()=>{
+    if (mode === "random"){
+      mode = "all";
+      document.getElementById("btnRandom").textContent = "抽 10 条";
+    } else {
+      mode = "random";
+      pool = [...QZ].sort(()=>Math.random()-.5).slice(0,10);
+      document.getElementById("btnRandom").textContent = "重抽 · 退出";
+    }
+    draw();
+  });
+  document.getElementById("btnClear").addEventListener("click", ()=>{
+    for (const k in rec) delete rec[k];
+    U.set(KEY, rec);
+    mode = "all"; pool = [];
+    document.getElementById("btnRandom").textContent = "抽 10 条";
+    draw();
+  });
+  draw();
+})();
+</script>
+</body>
+</html>

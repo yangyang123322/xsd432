@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>考纲树 · 432 统计</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/app.css">
+<script>document.documentElement.setAttribute('data-theme',localStorage.getItem('ds432.theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))</script>
+</head>
+<body data-page="chapters.html">
+<div class="shell">
+  <aside class="side"></aside>
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="sub">AXIS 1 · 茆诗松《概率论与数理统计教程》第二版</div>
+        <h1>考纲树</h1>
+      </div>
+      <div class="actions">
+        <input type="search" id="q" placeholder="搜章节 / 知识点…" style="width:200px">
+        <button class="btn" id="themeBtn" title="切换主题">☀</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="grid g4" id="kpi"></div>
+      <p class="small muted" style="margin:12px 0 0">这是<b>轴一</b>：教材目录本身。8 章 43 节 164 目，来自《概率论与数理统计教程_知识点全录》。轴一负责「有没有漏」，每章右侧挂的是本站 40 个考点里落在这章的那些——点考点可以跳到真题。</p>
+    </div>
+
+    <div id="tree" class="tree"></div>
+
+    <footer class="foot">目（164 条）的正文来自知识点全录原文；考点标签是本站在真题标注中归纳的 40 个标准考点，不等同于教材目录层级。</footer>
+  </main>
+</div>
+
+<script src="data/data.js"></script>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+U.boot("chapters.html");
+(function(){
+  const D = window.DATA, Q = D.qs;
+  const nItem = D.outline.reduce((a,c)=>a+c.secs.reduce((b,s)=>b+s.items.length,0),0);
+  document.getElementById("kpi").innerHTML = [
+    ["章", D.outline.length, "对应茆书 8 章 + 附录"],
+    ["节", D.outline.reduce((a,c)=>a+c.secs.length,0), "二级目录"],
+    ["目", nItem, "三级知识点"],
+    ["考点", D.kps.length, "本站标注口径"]
+  ].map(([k,v,s])=>'<div class="kpi"><div class="k">'+k+'</div><div class="v">'+v+'</div><div class="h">'+s+'</div></div>').join("");
+
+  function render(kw){
+    kw = (kw||"").trim();
+    let h = "";
+    D.outline.forEach((c, ci)=>{
+      const id = "ch" + (ci+1);
+      const ck = D.kps.filter(k=>k.ch===id);
+      const items = c.secs.reduce((a,s)=>a+s.items.length,0);
+      const qn = Q.filter(q=>q.ch===id).length;
+      h += '<details class="ch"'+(kw?" open":"")+'><summary>第'+c.no+'章　'+c.name+
+        '<span class="muted small" style="margin-left:10px">'+c.secs.length+' 节 · '+items+' 目 · 真题 '+qn+' 题</span></summary><div class="in">';
+      if (ck.length) h += '<div class="pill-row" style="margin-bottom:8px">'+ck.map(k=>'<a class="chip acc" style="text-decoration:none" href="bank.html?kp='+encodeURIComponent(k.name)+'">'+k.name+' <b style="margin-left:3px">'+k.main+'</b></a>').join("")+"</div>";
+      c.secs.forEach(s=>{
+        const secItems = s.items.filter(it=>!kw || (s.name+it.name+it.body).toLowerCase().includes(kw.toLowerCase()));
+        if (kw && !secItems.length && !s.name.toLowerCase().includes(kw.toLowerCase())) return;
+        h += '<details class="sec"'+(kw?" open":"")+'><summary>'+s.no+'　'+s.name+'<span class="muted small" style="margin-left:8px">'+s.items.length+' 目</span></summary><div class="in">';
+        (kw? secItems : s.items).forEach(it=>{
+          h += '<div class="item"><b>'+it.no+'</b>'+it.name+(it.body?'<details style="margin:4px 0 0;border:0;background:transparent"><summary style="padding:2px 0;font-size:12px;color:var(--ink-3)">展开</summary><div class="in" style="padding:2px 0 6px;font-size:13px">'+U.md(it.body)+'</div></details>':"")+"</div>";
+        });
+        h += "</div></details>";
+      });
+      h += "</div></details>";
+    });
+    document.getElementById("tree").innerHTML = h || '<div class="empty">没有匹配的章节或知识点</div>';
+  }
+  render("");
+  let t;
+  document.getElementById("q").addEventListener("input", e=>{ clearTimeout(t); t = setTimeout(()=>render(e.target.value), 180); });
+})();
+</script>
+</body>
+</html>

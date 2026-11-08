@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>招法网络 · 432 统计</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/app.css">
+<script>document.documentElement.setAttribute('data-theme',localStorage.getItem('ds432.theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))</script>
+<style>
+  .gwrap{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  svg#net{display:block;width:100%;height:auto}
+  svg#net text{font-family:var(--sans);font-size:8.4px;fill:var(--ink-2);cursor:pointer}
+  svg#net .nd{cursor:pointer;transition:.15s}
+  svg#net .nd:hover circle{stroke:var(--accent-2);stroke-width:1.6}
+  svg#net line{stroke:var(--line-2);stroke-width:.6;opacity:.55;transition:.15s}
+  svg#net line.hi{stroke:var(--accent);stroke-width:1.2;opacity:.9}
+  svg#net .nd.dim{opacity:.28}
+  .legend{position:absolute;left:14px;bottom:12px;font-size:11.5px;color:var(--ink-3);line-height:1.7}
+  .ggrid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px}
+  @media(max-width:860px){ .ggrid{grid-template-columns:1fr} .legend{position:static;margin:8px 0 0} }
+</style>
+</head>
+<body data-page="graph.html">
+<div class="shell">
+  <aside class="side"></aside>
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="sub">AXIS 2 · 转招路径</div>
+        <h1>招法网络</h1>
+      </div>
+      <div class="actions"><button class="btn" id="themeBtn" title="切换主题">☀</button></div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <p style="margin:0">34 招不是并列的清单：解完矩估计往往会转到「无偏与修正」，判完独立常转「随机变量函数的分布」。这一页把「做完这一步，下一步最可能去哪」连成网——<b>它的用处是考场上卡住时换招</b>：当前招走不动，顺着边找下一招，而不是在原招里死磕。</p>
+      <div class="row" style="margin-top:12px;gap:8px;flex-wrap:wrap" id="kpi"></div>
+      <div class="row" style="margin-top:10px"><span class="chip" id="onlyCross">只看跨板块转招</span>
+        <span class="small muted" style="margin-left:8px">实线 = 同章转招，红线 = 跨章转招（章内刷题练不出来的那一半）</span></div>
+    </div>
+
+    <div class="ggrid">
+      <div class="gwrap">
+        <svg id="net" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div class="legend">圆点编号 = 破题诀编号（01→34）<br>点越大 = 命中真题越多 · 悬停看详情</div>
+      </div>
+      <div>
+        <div class="card" id="panel">
+          <div class="muted small">把鼠标放到任意一招上</div>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <h3 style="margin-top:0">网络概况</h3>
+          <div id="gstat" class="small"></div>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <h3 style="margin-top:0">接得最密的招</h3>
+          <div id="hubs" class="small"></div>
+        </div>
+        <div class="card" style="margin-top:12px;max-height:340px;overflow:auto">
+          <h3 style="margin-top:0;position:sticky;top:0;background:var(--panel)">34 招编号</h3>
+          <div id="index" class="small"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="foot">边的方向由作者按解题流程手写（每招 2—3 条），不是统计共现——所以它是「建议路径」，不是「唯一路径」。</footer>
+  </main>
+</div>
+
+<script src="data/data.js"></script>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+U.boot("graph.html");
+(function(){
+  const D = window.DATA, J = D.pojue;
+  const svg = document.getElementById("net");
+  const W=800, R=306, cx=W/2, cy=W/2;
+  const pos = {};
+  J.forEach((j,i)=>{
+    const a = (i/J.length)*Math.PI*2 - Math.PI/2;
+    pos[j.id] = {x: cx + R*Math.cos(a), y: cy + R*Math.sin(a), a: a, j: j};
+  });
+
+  const NS = "http://www.w3.org/2000/svg";
+  function chOf(j){
+    for (const n of j.kps){ const k = U.kp(n); if (k) return k.ch; }
+    return "ch9";
+  }
+  const edges = [];
+  J.forEach(j=>(j.next||[]).forEach(t=>{ if(pos[t]) edges.push([j.id,t, chOf(j)!==chOf(J.find(x=>x.id===t))]); }));
+
+  let onlyCross = false;
+  const gE = document.createElementNS(NS,"g");
+  svg.appendChild(gE);
+  function renderEdges(){
+    gE.innerHTML = "";
+    edges.filter(e=>!onlyCross || e[2]).forEach(([s,t,cross])=>{
+      const l = document.createElementNS(NS,"line");
+      l.setAttribute("x1",pos[s].x); l.setAttribute("y1",pos[s].y);
+      l.setAttribute("x2",pos[t].x); l.setAttribute("y2",pos[t].y);
+      l.dataset.s=s; l.dataset.t=t;
+      if (cross){ l.style.stroke = "var(--accent-2)"; l.style.strokeWidth = "1"; l.style.opacity = ".55"; }
+      gE.appendChild(l);
+    });
+  }
+  renderEdges();
+  document.getElementById("onlyCross").addEventListener("click", (e)=>{
+    onlyCross = !onlyCross;
+    e.currentTarget.classList.toggle("on", onlyCross);
+    renderEdges();
+  });
+
+  const gN = document.createElementNS(NS,"g");
+  J.forEach(j=>{
+    const p = pos[j.id];
+    const g = document.createElementNS(NS,"g");
+    g.setAttribute("class","nd"); g.dataset.id = j.id;
+    const c = document.createElementNS(NS,"circle");
+    const r = 12 + Math.min(4, (j.n||0)/4);
+    c.setAttribute("cx",p.x); c.setAttribute("cy",p.y); c.setAttribute("r",r);
+    c.setAttribute("fill", j.n ? "var(--accent)" : "var(--line-2)");
+    c.setAttribute("fill-opacity", j.n? .9 : .7);
+    g.appendChild(c);
+    const t = document.createElementNS(NS,"text");
+    t.setAttribute("x", p.x); t.setAttribute("y", p.y + 3.2);
+    t.setAttribute("text-anchor","middle");
+    t.setAttribute("font-size","9.6"); t.setAttribute("font-family","var(--mono)");
+    t.style.fill = j.n ? "#fff" : "var(--ink-2)";
+    t.style.pointerEvents = "none";
+    t.textContent = j.id.slice(1);
+    g.appendChild(t);
+    const title = document.createElementNS(NS,"title");
+    title.textContent = j.id+" "+j.name+" · 命中"+j.n+"题";
+    g.appendChild(title);
+    gN.appendChild(g);
+  });
+  svg.appendChild(gN);
+
+  function focus(id){
+    const j = J.find(x=>x.id===id);
+    const out = (j.next||[]), inn = J.filter(x=>(x.next||[]).includes(id)).map(x=>x.id);
+    svg.querySelectorAll(".nd").forEach(n=>{
+      const k = n.dataset.id;
+      n.classList.toggle("dim", !(k===id || out.includes(k) || inn.includes(k)));
+    });
+    svg.querySelectorAll("line").forEach(l=>{
+      const on = (l.dataset.s===id) || (l.dataset.t===id);
+      l.classList.toggle("hi", on);
+    });
+    const outs = out.map(t=>{ const x=J.find(y=>y.id===t); return '<a class="chip" href="pojue.html#'+t+'">'+x.name+'</a>'; }).join("");
+    const inns = inn.map(t=>{ const x=J.find(y=>y.id===t); return '<a class="chip" href="pojue.html#'+t+'">'+x.name+'</a>'; }).join("");
+    document.getElementById("panel").innerHTML =
+      '<div class="small mono" style="color:var(--accent)">'+j.id+'</div>'+
+      '<h3 style="margin:2px 0 6px">'+j.name+'</h3>'+
+      '<div class="small muted">'+j.short+'</div>'+
+      '<div class="sep"></div>'+
+      '<div class="small"><b>识别：</b>'+U.esc(j.signal.slice(0,90))+(j.signal.length>90?"…":"")+'</div>'+
+      '<div class="small" style="margin-top:8px"><b>命中真题：</b>'+(j.n?j.n+" 题 · "+j.pts+" 分":"综合题")+'</div>'+
+      (outs?'<div class="small" style="margin-top:8px"><b>转出：</b></div><div class="pill-row">'+outs+"</div>":"")+
+      (inns?'<div class="small" style="margin-top:4px"><b>转入：</b></div><div class="pill-row">'+inns+"</div>":"")+
+      '<div style="margin-top:10px"><a class="btn sm" href="pojue.html#'+j.id+'">打开破题诀 →</a></div>';
+  }
+  svg.querySelectorAll(".nd").forEach(n=>{
+    n.addEventListener("mouseenter", ()=>focus(n.dataset.id));
+    n.addEventListener("click", ()=>{ location.href = "pojue.html#"+n.dataset.id; });
+  });
+
+  const crossN = edges.filter(e=>e[2]).length;
+  const withQ = J.filter(j=>(j.n||0)>0).length;
+  document.getElementById("kpi").innerHTML =
+    '<span class="chip"><b>'+J.length+'</b> 招</span>'+
+    '<span class="chip"><b>'+edges.length+'</b> 转招路径</span>'+
+    '<span class="chip acc"><b>'+crossN+'</b> 跨章（'+Math.round(crossN/edges.length*100)+'%）</span>'+
+    '<span class="chip"><b>'+withQ+'</b> 招有真题可练</span>';
+
+  document.getElementById("gstat").innerHTML =
+    '<div class="spread"><span class="muted">节点</span><b>'+J.length+'</b></div>'+
+    '<div class="spread"><span class="muted">有向边</span><b>'+edges.length+'</b></div>'+
+    '<div class="spread"><span class="muted">跨章边</span><b>'+crossN+'</b></div>'+
+    '<div class="spread"><span class="muted">平均出度</span><b>'+(edges.length/J.length).toFixed(2)+'</b></div>'+
+    '<div class="spread"><span class="muted">孤点</span><b>'+J.filter(j=>!(j.next||[]).length && !edges.some(e=>e[1]===j.id)).length+'</b></div>';
+
+  const hub = J.map(j=>{
+    const inn = edges.filter(e=>e[1]===j.id).length;
+    return {j:j, deg: inn + (j.next||[]).length};
+  }).sort((a,b)=>b.deg-a.deg).slice(0,6);
+  document.getElementById("hubs").innerHTML = hub.map(h=>
+    '<div class="spread" style="padding:4px 0;border-bottom:1px dashed var(--line)"><a href="pojue.html#'+h.j.id+'">'+h.j.name+'</a><span class="muted">'+h.deg+' 度</span></div>').join("");
+
+  document.getElementById("index").innerHTML = J.map(j=>
+    '<div class="idx" data-id="'+j.id+'" style="display:flex;gap:7px;padding:3px 0;cursor:pointer;border-bottom:1px dashed var(--line)">'+
+    '<span class="mono" style="color:var(--accent);font-size:11px;width:16px;flex:none">'+j.id.slice(1)+'</span>'+
+    '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+j.name+'</span>'+
+    '<span class="muted" style="font-size:11px">'+j.n+'题</span></div>').join("");
+  document.querySelectorAll("#index .idx").forEach(el=>{
+    el.addEventListener("mouseenter", ()=>focus(el.dataset.id));
+    el.addEventListener("click", ()=>{ location.href = "pojue.html#"+el.dataset.id; });
+  });
+})();
+</script>
+</body>
+</html>

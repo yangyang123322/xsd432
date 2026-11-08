@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>组卷模考 · 432 统计</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/app.css">
+<script>document.documentElement.setAttribute('data-theme',localStorage.getItem('ds432.theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))</script>
+<style>
+  .ebar{position:sticky;top:0;z-index:6;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 0;margin-bottom:14px}
+  .clock{font-variant-numeric:tabular-nums;font-size:22px;font-weight:600;letter-spacing:.5px}
+  .clock.warn{color:var(--warn)}
+  .cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,260px));gap:12px;max-width:840px}
+  .cfg .fld{display:flex;flex-direction:column;gap:6px}
+  .cfg label{font-size:12px;color:var(--ink-3)}
+  .gq{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:var(--panel)}
+  .gq .ghead{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  .gq .gno{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+  .gq .stem2{font-size:14px;line-height:1.8;margin-top:6px}
+  .gq .pick{display:flex;gap:6px;margin-top:8px}
+  .gq.right{border-color:var(--ok)}
+  .gq.wrong{border-color:var(--warn)}
+  .score{display:flex;gap:22px;align-items:baseline;flex-wrap:wrap;margin:6px 0 14px}
+  .score b{font-size:34px;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body data-page="exam.html">
+<div class="shell">
+  <aside class="side"></aside>
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="sub">MOCK EXAM · 按八套卷结构随机组卷</div>
+        <h1>组卷模考</h1>
+      </div>
+      <div class="actions"><button class="btn" id="themeBtn">☀</button></div>
+    </div>
+
+    <div id="app"></div>
+
+    <footer class="foot">模考记录只存本机。交卷后逐题自评「对 / 错」，系统按分值算分，并把对错写进错题本与复习队列（对 → 记住了，错 → 没做出）。不做计时排名，只做你自己的对照。</footer>
+  </main>
+</div>
+
+<script src="data/data.js"></script>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+U.boot("exam.html");
+(function(){
+  const D = window.DATA, Q = D.qs;
+  const EK = "exam", LK = "examlog";
+  const app = document.getElementById("app");
+  let tick = null;
+
+  const norm = s => (s || "").replace(/[（(].*?[）)]/g, "").trim();
+
+  function cfgHTML(){
+    const opts = D.papers.map(p=>'<option value="'+p.year+'">'+p.year+' 年卷（'+p.total+' 分 · '+p.nq+' 题）</option>').join("");
+    return '<div class="card"><h2 style="margin-top:0">开考设置</h2>'+
+      '<div class="cfg">'+
+        '<div class="fld"><label>按哪年的结构出卷</label><select id="py"><option value="mix">混合（八套卷随机结构）</option>'+opts+'</select></div>'+
+        '<div class="fld"><label>时长（分钟）</label><input type="number" id="dur" value="180" min="30" max="300" step="10"></div>'+
+        '<div class="fld"><label>抽题偏好</label><select id="pref"><option value="undo">优先没做过的</option><option value="any">完全随机</option></select></div>'+
+      '</div>'+
+      '<div class="row" style="margin-top:16px"><button class="btn primary" id="go">开始模考</button>'+
+      '<span class="small muted">按结构抽题：填空 / 名词解释 / 计算 / 证明 各自抽满该年题量，不足时用同题型补。</span></div></div>'+
+      '<div class="card" id="logbox"></div>';
+  }
+
+  function drawCfg(){
+    app.innerHTML = cfgHTML();
+    document.getElementById("go").addEventListener("click", start);
+    drawLog();
+  }
+
+  function drawLog(){
+    const log = U.get(LK, []);
+    const box = document.getElementById("logbox");
+    if (!log.length){ box.innerHTML = '<h2 style="margin-top:0">历次模考</h2><div class="empty">还没有交过卷。做完第一套，这里会出现分数曲线。</div>'; return; }
+    const rows = log.slice().reverse();
+    box.innerHTML = '<h2 style="margin-top:0">历次模考</h2>'+
+      '<table class="tb"><thead><tr><th>日期</th><th>卷型</th><th>得分</th><th>正确率</th><th>用时</th></tr></thead><tbody>'+
+      rows.map(r=>'<tr><td class="mono">'+r.date+'</td><td>'+U.esc(r.title)+'</td><td><b>'+r.score+'</b> / '+r.full+'</td><td>'+Math.round(r.acc*100)+'%</td><td>'+(r.mins!=null?r.mins+" 分":"—")+'</td></tr>').join("")+
+      '</tbody></table>';
+  }
+
+  function pick(list, n, pref){
+    const arr = list.slice();
+    arr.sort((a,b)=>{
+      if (pref === "undo"){
+        const sa = U.qs.get(a.id), sb = U.qs.get(b.id);
+        const da = sa.acc === undefined ? 0 : 1, db = sb.acc === undefined ? 0 : 1;
+        if (da !== db) return da - db;
+      }
+      return Math.random() - 0.5;
+    });
+    return arr.slice(0, n);
+  }
+
+  function start(){
+    const py = document.getElementById("py").value;
+    const dur = Math.max(30, Math.min(300, +document.getElementById("dur").value || 180));
+    const pref = document.getElementById("pref").value;
+    const pool = Q.filter(q=>!q.missStem);
+    const plan = [];
+    if (py === "mix"){
+      const p = D.papers[Math.floor(Math.random()*D.papers.length)];
+      plan.push(...p.secs.map(s=>({type:s.type, n:s.n})));
+    } else {
+      const p = D.papers.find(x=>String(x.year)===py);
+      plan.push(...p.secs.map(s=>({type:s.type, n:s.n})));
+    }
+    const used = new Set(), ids = [];
+    for (const s of plan){
+      let cand = pool.filter(q=>norm(q.type) === norm(s.type) && !used.has(q.id));
+      // 指定年份时，优先用该年原卷的题；不够再从别的年份补
+      if (py !== "mix"){
+        const same = cand.filter(q=>String(q.year) === py);
+        if (same.length >= s.n) cand = same;
+        else if (same.length){
+          const rest = cand.filter(q=>String(q.year) !== py);
+          const first = same.sort((a,b)=>Math.random()-0.5);
+          for (const q of first){ used.add(q.id); ids.push(q.id); }
+          cand = rest; s.n = s.n - first.length;
+        }
+      }
+      for (const q of pick(cand, s.n, pref)){ used.add(q.id); ids.push(q.id); }
+    }
+    // 题型名对不上时的兜底：按题量补
+    const want = plan.reduce((a,s)=>a+s.n,0);
+    if (ids.length < want){
+      const rest = pool.filter(q=>!used.has(q.id));
+      for (const q of pick(rest, want - ids.length, pref)){ used.add(q.id); ids.push(q.id); }
+    }
+    ids.sort((a,b)=> a.localeCompare(b));
+    const exam = { ids, start: Date.now(), dur, title: (py==="mix"?"混合卷":py+" 年卷") };
+    U.set(EK, exam);
+    run();
+  }
+
+  function resume(){ U.set(EK, U.get(EK)); }
+
+  function remain(exam){
+    const ms = exam.dur*60000 - (Date.now() - exam.start);
+    return Math.max(0, Math.floor(ms/1000));
+  }
+
+  function fmt(sec){
+    const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60), s = sec%60;
+    const p = n => (n<10?"0":"")+n;
+    return (h>0 ? h+":" : "") + p(m) + ":" + p(s);
+  }
+
+  function run(){
+    const exam = U.get(EK, null);
+    if (!exam){ drawCfg(); return; }
+    const qs = exam.ids.map(id=>U.q(id)).filter(Boolean);
+    const full = qs.reduce((a,q)=>a+(q.pts||0),0);
+    app.innerHTML = '<div class="ebar"><div class="spread">'+
+        '<div><span class="small muted">'+U.esc(exam.title)+' · '+qs.length+' 题 · 满分 '+full+' 分</span>'+
+        '<div class="clock" id="clock">--:--</div></div>'+
+        '<div class="row"><button class="btn" id="quit">放弃</button><button class="btn primary" id="submit">交卷</button></div>'+
+      '</div>'+
+      '<div class="small muted" style="margin-bottom:10px">先自己写，再看解析。交卷后逐题点「对 / 错」自评，系统算分并写进错题本与复习队列。</div>'+
+      '</div>'+
+      qs.map((q,i)=> '<div class="gq" data-id="'+U.esc(q.id)+'">'+
+        '<div class="ghead"><span class="gno">'+String(i+1).padStart(2,"0")+' · '+U.esc(q.id)+'</span><span class="chip">'+q.pts+' 分</span>'+
+        (q.kp?'<span class="chip acc">'+U.esc(q.kp)+'</span>':'')+'</div>'+
+        '<div class="stem2">'+U.md(q.stem || "（题目缺失）")+'</div>'+
+        '<details style="margin-top:8px"><summary class="small muted">看解析（交卷前建议先自己写）</summary>'+
+          '<div class="q-sec sol">'+(q.sol?U.md(q.sol):'<span class="muted">本题无解析</span>')+'</div></details>'+
+        '</div>').join("");
+
+    const clock = document.getElementById("clock");
+    const paint = ()=>{
+      const left = remain(exam);
+      clock.textContent = fmt(left);
+      clock.classList.toggle("warn", left < 600);
+      if (left <= 0){ clearInterval(tick); grade(); }
+    };
+    clearInterval(tick); tick = setInterval(paint, 1000); paint();
+
+    document.getElementById("submit").addEventListener("click", ()=>{ clearInterval(tick); grade(); });
+    document.getElementById("quit").addEventListener("click", ()=>{
+      if (!confirm("放弃本次模考？已记录的题目状态不会回滚。")) return;
+      clearInterval(tick); U.del(EK); drawCfg();
+    });
+  }
+
+  function grade(){
+    const exam = U.get(EK, null);
+    if (!exam || !exam.ids){ drawCfg(); return; }
+    const qs = exam.ids.map(id=>U.q(id)).filter(Boolean);
+    const full = qs.reduce((a,q)=>a+(q.pts||0),0);
+    const mark = {};
+    app.innerHTML = '<div class="card"><div class="spread"><h2 style="margin-top:0">逐题自评</h2>'+
+        '<span class="small muted">点「对」得该题分值，点「错」记 0 分</span></div>'+
+        '<div class="score"><b id="sc">0</b><span class="muted">/ '+full+' 分</span><span id="acc" class="chip"></span></div>'+
+        '<div class="row"><button class="btn primary" id="save">保存成绩</button><button class="btn" id="allok">全部按自己写的对</button></div></div>'+
+      qs.map((q,i)=> '<div class="gq" data-id="'+U.esc(q.id)+'">'+
+        '<div class="ghead"><span class="gno">'+String(i+1).padStart(2,"0")+' · '+U.esc(q.id)+'</span><span class="chip">'+q.pts+' 分</span><span class="chip acc">'+U.esc(q.kp||"—")+'</span></div>'+
+        '<div class="stem2">'+U.md(q.stem || "（题目缺失）")+'</div>'+
+        '<details style="margin-top:8px"><summary class="small muted">解析</summary><div class="q-sec sol">'+(q.sol?U.md(q.sol):'<span class="muted">本题无解析</span>')+'</div></details>'+
+        '<div class="pick"><button class="btn sm" data-m="1">对</button><button class="btn sm" data-m="0">错</button></div>'+
+        '</div>').join("");
+
+    function repaint(){
+      let sc = 0, n = 0, right = 0;
+      qs.forEach(q=>{ const m = mark[q.id]; if (m === undefined) return; n++; if (m){ sc += q.pts||0; right++; } });
+      document.getElementById("sc").textContent = sc;
+      document.getElementById("acc").textContent = n ? ("已评 "+n+"/"+qs.length+" · 正确率 "+Math.round(right/n*100)+"%") : "还没开始评";
+    }
+    app.querySelectorAll(".gq").forEach(el=>{
+      const id = el.getAttribute("data-id");
+      el.querySelectorAll("[data-m]").forEach(b=>{
+        b.addEventListener("click", ()=>{
+          mark[id] = b.getAttribute("data-m") === "1";
+          el.classList.toggle("right", mark[id]);
+          el.classList.toggle("wrong", !mark[id]);
+          repaint();
+        });
+      });
+    });
+    document.getElementById("allok").addEventListener("click", ()=>{
+      qs.forEach(q=>{ if (mark[q.id] === undefined) mark[q.id] = true; });
+      app.querySelectorAll(".gq").forEach(el=>{ const id = el.getAttribute("data-id"); el.classList.toggle("right", !!mark[id]); el.classList.toggle("wrong", mark[id] === false); });
+      repaint();
+    });
+
+    document.getElementById("save").addEventListener("click", ()=>{
+      let sc = 0, right = 0, n = 0;
+      qs.forEach(q=>{
+        const m = mark[q.id];
+        if (m === undefined) return;
+        n++;
+        U.srs.grade(q.id, m ? "good" : "again");
+        U.qs.patch(q.id, { acc: m ? 1 : 0, last: U.today(), wrong: !m });
+        if (m){ sc += q.pts||0; right++; }
+      });
+      const mins = Math.max(1, Math.round((Date.now() - exam.start)/60000));
+      const log = U.get(LK, []);
+      log.push({ date: U.today(), title: exam.title, score: sc, full, acc: n ? right/n : 0, mins });
+      U.set(LK, log);
+      U.del(EK);
+
+      // 失分按考点
+      const lost = {};
+      qs.forEach(q=>{ if (mark[q.id] === false) lost[q.kp || "未标注"] = (lost[q.kp||"未标注"]||0) + (q.pts||0); });
+      const rows = Object.entries(lost).sort((a,b)=>b[1]-a[1]);
+      const left = Object.entries(U.qs.all()).filter(([k,v])=>v.wrong).length;
+      app.innerHTML = '<div class="card"><h2 style="margin-top:0">成绩单</h2>'+
+        '<div class="score"><b>'+sc+'</b><span class="muted">/ '+full+' 分</span>'+
+        '<span class="chip">正确率 '+(n?Math.round(right/n*100):0)+'%</span><span class="chip">用时 '+mins+' 分</span></div>'+
+        '<div class="small muted" style="margin-bottom:12px">已写入：做对 '+right+' 题进复习队列，做错 '+(n-right)+' 题进错题本（现在共 '+left+' 道错题）。</div>'+
+        (rows.length ? '<h3>失分集中在</h3>'+rows.map(([k,v])=>'<div class="spread" style="padding:5px 0;border-bottom:1px dashed var(--line)"><span>'+U.esc(k)+'</span><b>−'+v+' 分</b></div>').join("")+'<div style="margin-top:12px"><a class="btn" href="review.html">去看诊断 →</a></div>'
+          : '<div class="empty">全对。要么题太简单，要么你真的很稳。</div>')+
+        '<div class="row" style="margin-top:16px"><button class="btn primary" id="again">再来一套</button><a class="btn" href="bank.html?f=wrong">看错题 →</a></div></div>';
+      document.getElementById("again").addEventListener("click", drawCfg);
+    });
+
+    repaint();
+  }
+
+  // 有未完成的卷就恢复，否则设置页
+  const cur = U.get(EK, null);
+  if (cur && cur.ids && remain(cur) > 0) run(); else drawCfg();
+})();
+</script>
+</body>
+</html>

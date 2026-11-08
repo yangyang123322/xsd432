@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>真题题库 · 432 统计</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<link rel="stylesheet" href="assets/app.css">
+<script>document.documentElement.setAttribute('data-theme',localStorage.getItem('ds432.theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))</script>
+<style>
+  .act{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:10px 0 4px;border-bottom:1px dashed var(--line);margin-bottom:8px}
+  .act .lb{font-size:11.5px;color:var(--ink-3);margin-right:2px}
+  .fbar{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0 8px;border-bottom:1px solid var(--line);margin-bottom:14px}
+</style>
+</head>
+<body data-page="bank.html">
+<div class="shell">
+  <aside class="side"></aside>
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="sub">QUESTION BANK · 111 题 · 2019—2026</div>
+        <h1>真题题库</h1>
+      </div>
+      <div class="actions">
+        <button class="btn" id="btnWrong">只看错题</button>
+        <button class="btn" id="btnHard">只看难题</button>
+        <button class="btn" id="btnReset" title="清空本页筛选">重置</button>
+        <button class="btn" id="themeBtn" title="切换主题">☀</button>
+      </div>
+    </div>
+
+    <div class="fbar">
+      <div class="filters" style="margin-bottom:8px">
+        <input type="search" id="kw" placeholder="搜题干 / 考点 / 解题…" style="width:220px">
+        <select id="fy"><option value="">全部年份</option></select>
+        <select id="ft"><option value="">全部题型</option></select>
+        <select id="fc"><option value="">全部章节</option></select>
+        <select id="fk"><option value="">全部考点</option></select>
+        <select id="fl"><option value="">全部层级</option>
+          <option value="识记">识记 / 理解</option>
+          <option value="应用">应用</option>
+          <option value="综合">综合应用（难题）</option>
+        </select>
+        <select id="fs">
+          <option value="">全部状态</option>
+          <option value="undo">未做</option>
+          <option value="wrong">错题</option>
+          <option value="star">收藏</option>
+          <option value="done">做过</option>
+        </select>
+        <span class="chip" id="cnt" style="margin-left:auto"></span>
+      </div>
+    </div>
+
+    <div id="list"></div>
+
+    <footer class="foot">个人操作（错题 / 收藏 / 复习打分）只写本机 localStorage，不上传。复习用简化 SM-2：没做出→当天再来一遍；记住了→间隔按 2.5 倍往上滚；太简单→再乘 1.25。</footer>
+  </main>
+</div>
+
+<script src="data/data.js"></script>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/app.js"></script>
+<script>
+U.boot("bank.html");
+(function(){
+  const D = window.DATA, Q = D.qs;
+  const P = new URLSearchParams(location.search);
+  let st = {kw:"", y:"", t:"", c:"", k:"", l:"", s:""};
+  if (P.get("kp")) st.k = P.get("kp");
+  if (P.get("year")) st.y = P.get("year");
+  if (P.get("ch")) st.c = P.get("ch");
+  if (P.get("f")) st.s = P.get("f");
+  const qid = P.get("qid");
+  let jumped = false;
+
+  const chOf = q => { const k = U.kp(q.kp); return k ? k.ch : ""; };
+  const lvlOf = q => { const s = q.level || ""; if (/综合/.test(s)) return "综合"; if (/应用/.test(s)) return "应用"; return "识记"; };
+
+  // 填充下拉
+  const years = [...new Set(Q.map(q=>q.year))].sort((a,b)=>b-a);
+  document.getElementById("fy").innerHTML += years.map(y=>'<option value="'+y+'">'+y+" 年</option>").join("");
+  const types = [...new Set(Q.map(q=>q.type))];
+  document.getElementById("ft").innerHTML += types.map(t=>'<option value="'+t+'">'+t+"</option>").join("");
+  document.getElementById("fc").innerHTML += D.chapters.map(c=>'<option value="'+c.id+'">'+c.no+' · '+c.name+"</option>").join("");
+  document.getElementById("fk").innerHTML += D.kps.map(k=>'<option value="'+k.name.replace(/"/g,"&quot;")+'">'+k.name+" ("+k.main+")</option>").join("");
+
+  const map = {fy:"y", ft:"t", fc:"c", fk:"k", fl:"l", fs:"s"};
+  for (const id in map){
+    const el = document.getElementById(id);
+    el.value = st[map[id]] || "";
+    el.addEventListener("change", e=>{ st[map[id]] = e.target.value; draw(); });
+  }
+  document.getElementById("kw").addEventListener("input", e=>{ st.kw = e.target.value.trim(); draw(); });
+  document.getElementById("btnWrong").addEventListener("click", ()=>{
+    st.s = st.s === "wrong" ? "" : "wrong"; document.getElementById("fs").value = st.s; draw();
+  });
+  document.getElementById("btnHard").addEventListener("click", ()=>{
+    const on = st.l === "综合";
+    st.l = on ? "" : "综合"; st.s = ""; document.getElementById("fl").value = st.l; document.getElementById("fs").value = ""; draw();
+  });
+  document.getElementById("btnReset").addEventListener("click", ()=>{
+    st = {kw:"",y:"",t:"",c:"",k:"",l:"",s:""};
+    document.getElementById("kw").value=""; ["fy","ft","fc","fk","fl","fs"].forEach(i=>document.getElementById(i).value="");
+    draw();
+  });
+
+  function match(q){
+    if (st.y && q.year != st.y) return false;
+    if (st.t && q.type !== st.t) return false;
+    if (st.c && chOf(q) !== st.c) return false;
+    if (st.l && lvlOf(q) !== st.l) return false;
+    if (st.k && q.kp !== st.k && !(q.kps||[]).includes(st.k)) return false;
+    const s = U.qs.get(q.id);
+    if (st.s === "wrong" && !s.wrong) return false;
+    if (st.s === "star" && !s.star) return false;
+    if (st.s === "done" && !s.acc) return false;
+    if (st.s === "undo" && s.acc) return false;
+    if (st.kw){
+      const blob = (q.id+" "+q.stem+" "+q.sol+" "+(q.kps||[]).join(" ")+" "+(q.traps||[]).join(" ")).toLowerCase();
+      if (!blob.includes(st.kw.toLowerCase())) return false;
+    }
+    return true;
+  }
+
+  function draw(){
+    const list = Q.filter(match).sort((a,b)=> b.year-a.year || a.id.localeCompare(b.id));
+    document.getElementById("cnt").textContent = list.length + " 题 · " + list.reduce((a,q)=>a+q.pts,0) + " 分";
+    document.getElementById("list").innerHTML = list.map(q=>U.qcard(q, {open: q.id===qid})).join("") ||
+      '<div class="empty">没有符合条件的题目。试试重置筛选。</div>';
+    // 操作条
+    document.querySelectorAll(".q").forEach(el=>{
+      const id = el.getAttribute("data-id");
+      const box = el.querySelector(".q-open");
+      box.insertAdjacentHTML("afterbegin", U.actBar(id));
+    });
+    U.bindActs(document, ()=>{ draw(); });
+    U.bindCards(document);
+    if (qid && !jumped){
+      const el = document.querySelector('.q[data-id="'+qid+'"]');
+      if (el){ el.classList.add("hl"); el.scrollIntoView({block:"center"}); jumped = true; }
+    }
+  }
+  draw();
+})();
+</script>
+</body>
+</html>
