@@ -168,5 +168,15 @@ U.boot("pojue.html");
   if (location.hash) { const el = document.querySelector(location.hash); if (el) el.scrollIntoView(); }
 })();
 </script>
+<script>/* auto-to-mobile：窄屏直接进手机版对应页签（sessionStorage.stayDesktop=1 可留后门） */
+(function(){try{
+  if (sessionStorage.getItem('stayDesktop')==='1') return;
+  if (!window.matchMedia('(max-width: 819px)').matches) return;
+  if (/mobile\.html/.test(location.href)) return;
+  var f = location.pathname.split('/').pop().replace(/\.html$/,'');
+  var map = {pojue:'pojue', formulas:'formula', concepts:'concept', quiz:'quiz'};
+  var tab = map[f];
+  location.replace(tab ? ('mobile.html#t=' + tab) : 'mobile.html');
+}catch(e){}})();</script>
 </body>
 </html>

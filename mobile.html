@@ -645,6 +645,13 @@ ul.bxl li { margin: 4px 0; line-height: 1.6; }
     try { _merged = applyPacked(JSON.parse(decPacked(location.hash.slice(3)))); } catch (e) { }
     if (_merged) { try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { } }
   }
+  /* 直跳页签：地址带 #t=concept 时打开对应页签，并把 hash 清掉 */
+  var _tabHit = /^#t=([a-z]+)$/.exec(location.hash || "");
+  if (_tabHit) {
+    var _known = { pojue: 1, formula: 1, concept: 1, quiz: 1, q: 1 };
+    if (_known[_tabHit[1]]) { state.tab = _tabHit[1]; LS.set("m_tab", state.tab); }
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { }
+  }
   var m = D.meta || {};
   var sub = document.getElementById("sub");
   var sb = document.getElementById("syncBtn"); if (sb) sb.onclick = syncOpen;
