@@ -15,6 +15,10 @@
   .cc{border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:16px 18px;margin-bottom:12px}
   .cc h3{margin:0 0 2px;display:flex;gap:8px;align-items:baseline}
   .cc .st{color:var(--gold);font-size:12px;letter-spacing:1px}
+  .tx p{margin:0 0 9px;line-height:1.78}
+  .tx p:last-child{margin-bottom:0}
+  .tx .lab{display:inline-block;color:var(--accent);font-weight:600;margin-right:2px}
+  .tx .lab:after{content:"："}
 </style>
 </head>
 <body data-page="concepts.html">
@@ -23,7 +27,7 @@
   <main class="main">
     <div class="topbar">
       <div>
-        <div class="sub">CONCEPTS · 四段式 · ★★★ 27 组</div>
+        <div class="sub">CONCEPTS · 三段式 · ★★★ 27 组</div>
         <h1>辨析卡</h1>
       </div>
       <div class="actions">
@@ -33,7 +37,7 @@
     </div>
 
     <div class="card" style="margin-bottom:14px">
-      <p style="margin:0 0 10px">西大 432 的名词解释与判断题，考的不是背诵量，是<b>边界</b>。这 87 组来自《茆诗松第二版_考点背诵手册》，每组四段：<b>① 两个概念</b> → <b>② 区别</b> → <b>③ 联系</b> → <b>④ 例子</b>（另附一句话结论与钩子）。星级是真题频次：<span class="st" style="color:var(--gold)">★★★</span> 八年 ≥3 次或每年必考、<b>★★</b> 出现 1—2 次、<b>★</b> 未考但茆书主干。</p>
+      <p style="margin:0 0 10px">西大 432 的名词解释与判断题，考的不是背诵量，是<b>边界</b>。这 87 组来自《茆诗松第二版_考点背诵手册》，每组三段：<b>定义</b> → <b>区别</b> → <b>联系</b>，都可以直接抄到卷面上（另附一句话结论与钩子）。星级是真题频次：<span class="st" style="color:var(--gold)">★★★</span> 八年 ≥3 次或每年必考、<b>★★</b> 出现 1—2 次、<b>★</b> 未考但茆书主干。</p>
       <div class="filters" id="filters"></div>
     </div>
 
@@ -77,6 +81,7 @@ U.boot("concepts.html");
       if (st && c.star!==st) return false;
       if (kw){
         let b = c.title + c.one + c.sections.map(s=>s.body).join("");
+        if (c.bx2) b += c.bx2.def + c.bx2.diff + c.bx2.link;
         if (c.bx) b += c.bx.a + c.bx.b + (c.bx.diff||[]).join("") + c.bx.link + c.bx.ex;
         if (!b.toLowerCase().includes(kw.toLowerCase())) return false;
       }
@@ -86,7 +91,14 @@ U.boot("concepts.html");
       let h = '<div class="cc"><h3><span class="mono small muted">【'+c.no+'】</span>'+U.esc(c.title)+'<span class="st">'+"★".repeat(c.star)+'</span><span class="chip">第'+c.ch+'章</span></h3>';
       h += '<div class="one">'+U.md(c.one)+'</div>';
       const inl = s => U.md(s).replace(/^<p>|<\/p>$/g,"");
-      if (c.bx){
+      if (c.bx2){
+        const b = c.bx2;
+        h += '<div class="tx">'
+          + '<p><b class="lab">定义</b>'+inl(b.def)+'</p>'
+          + '<p><b class="lab">区别</b>'+inl(b.diff)+'</p>'
+          + '<p><b class="lab">联系</b>'+inl(b.link)+'</p>'
+          + '</div>';
+      } else if (c.bx){
         const b = c.bx;
         h += '<div class="sec-h">① 两个概念</div>';
         h += '<ul class="bx"><li><b>A</b>　'+inl(b.a)+'</li><li><b>B</b>　'+inl(b.b)+'</li></ul>';
