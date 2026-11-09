@@ -19,6 +19,10 @@
   .tx p:last-child{margin-bottom:0}
   .tx .lab{display:inline-block;color:var(--accent);font-weight:600;margin-right:2px}
   .tx .lab:after{content:"："}
+  .tx p.link3{background:var(--accent-soft);border-radius:8px;padding:8px 10px;margin-top:8px}
+  .pill-row.f{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px}
+  .pill-row.f .chip{cursor:pointer}
+  .pill-row.f .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 </style>
 </head>
 <body data-page="concepts.html">
@@ -96,7 +100,7 @@ U.boot("concepts.html");
         h += '<div class="tx">'
           + '<p><b class="lab">定义</b>'+inl(b.def)+'</p>'
           + '<p><b class="lab">区别</b>'+inl(b.diff)+'</p>'
-          + '<p><b class="lab">联系</b>'+inl(b.link)+'</p>'
+          + '<p class="link3"><b class="lab">联系</b>'+inl(b.link)+'</p>'
           + '</div>';
       } else if (c.bx){
         const b = c.bx;

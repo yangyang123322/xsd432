@@ -145,6 +145,8 @@ ul.bxl li { margin: 4px 0; line-height: 1.6; }
 .tx3 p{margin:0 0 10px;font-size:15px;line-height:1.8}
 .tx3 p:last-child{margin-bottom:0}
 .tx3 p b{display:inline-block;min-width:32px;color:var(--accent);font-weight:600;margin-right:6px}
+
+.tx3 p.lk{background:var(--acc-soft, rgba(31,122,92,.08));border-radius:10px;padding:8px 10px;margin-top:6px}
 </style>
 </head>
 <body>
@@ -341,7 +343,7 @@ ul.bxl li { margin: 4px 0; line-height: 1.6; }
         h += '<div class="tx3">'
           + '<p><b>定义</b>' + inl(c.bx2.def) + '</p>'
           + '<p><b>区别</b>' + inl(c.bx2.diff) + '</p>'
-          + '<p><b>联系</b>' + inl(c.bx2.link) + '</p>'
+          + '<p class="lk"><b>联系</b>' + inl(c.bx2.link) + '</p>'
           + '</div>';
       } else if (c.bx) {
         var bx = c.bx;

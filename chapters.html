@@ -25,12 +25,13 @@
 
     <div class="card" style="margin-bottom:16px">
       <div class="grid g4" id="kpi"></div>
-      <p class="small muted" style="margin:12px 0 0">这是<b>轴一</b>：教材目录本身。8 章 43 节 164 目，来自《概率论与数理统计教程_知识点全录》。轴一负责「有没有漏」，每章右侧挂的是本站 40 个考点里落在这章的那些——点考点可以跳到真题。</p>
+      <p class="small muted" style="margin:12px 0 0">已按西大 432 近八年真题（2019—2026，111 题）精简：教材背景、纯名词和超纲深水一律删掉，只留会进题面的。<b>★★★</b> 八年 ≥3 次或几乎每年必考 · <b>★★</b> 出现过 1—2 次 · <b>★</b> 八年没考但要认得。每条的<b>彩色句</b>是这一目的精华——只背这一句，其余展开当补充。</p>
     </div>
 
+    <div class="pill-row f" id="fbar"></div>
     <div id="tree" class="tree"></div>
 
-    <footer class="foot">目（164 条）的正文来自知识点全录原文；考点标签是本站在真题标注中归纳的 40 个标准考点，不等同于教材目录层级。</footer>
+    <footer class="foot">已删 30 条教材背景/超纲内容（事件域、概率连续性、伽玛与贝塔分布、特征函数全节、林德伯格条件、频数频率表与直方图、五数概括、EM 算法、渐近正态、指数分布检验、游程与符号检验、EP 检验、Hartley/修正 Bartlett、重复数不等方差分析、多重比较的 S 法、曲线回归比较等）。</footer>
   </main>
 </div>
 
@@ -41,41 +42,92 @@
 U.boot("chapters.html");
 (function(){
   const D = window.DATA, Q = D.qs;
-  const nItem = D.outline.reduce((a,c)=>a+c.secs.reduce((b,s)=>b+s.items.length,0),0);
-  document.getElementById("kpi").innerHTML = [
-    ["章", D.outline.length, "对应茆书 8 章 + 附录"],
-    ["节", D.outline.reduce((a,c)=>a+c.secs.length,0), "二级目录"],
-    ["目", nItem, "三级知识点"],
-    ["考点", D.kps.length, "本站标注口径"]
-  ].map(([k,v,s])=>'<div class="kpi"><div class="k">'+k+'</div><div class="v">'+v+'</div><div class="h">'+s+'</div></div>').join("");
+  const all = [];
+  D.outline.forEach(c=>c.secs.forEach(s=>s.items.forEach(it=>all.push(it))));
+  const nItem = all.length;
+  const nSec = D.outline.reduce((a,c)=>a+c.secs.length,0);
+  const n3 = all.filter(x=>x.star===3).length;
+  const n2 = all.filter(x=>x.star===2).length;
+  const n1 = all.filter(x=>x.star===1).length;
 
-  function render(kw){
-    kw = (kw||"").trim();
-    let h = "";
-    D.outline.forEach((c, ci)=>{
-      const id = "ch" + (ci+1);
-      const ck = D.kps.filter(k=>k.ch===id);
-      const items = c.secs.reduce((a,s)=>a+s.items.length,0);
-      const qn = Q.filter(q=>q.ch===id).length;
-      h += '<details class="ch"'+(kw?" open":"")+'><summary>第'+c.no+'章　'+c.name+
-        '<span class="muted small" style="margin-left:10px">'+c.secs.length+' 节 · '+items+' 目 · 真题 '+qn+' 题</span></summary><div class="in">';
-      if (ck.length) h += '<div class="pill-row" style="margin-bottom:8px">'+ck.map(k=>'<a class="chip acc" style="text-decoration:none" href="bank.html?kp='+encodeURIComponent(k.name)+'">'+k.name+' <b style="margin-left:3px">'+k.main+'</b></a>').join("")+"</div>";
-      c.secs.forEach(s=>{
-        const secItems = s.items.filter(it=>!kw || (s.name+it.name+it.body).toLowerCase().includes(kw.toLowerCase()));
-        if (kw && !secItems.length && !s.name.toLowerCase().includes(kw.toLowerCase())) return;
-        h += '<details class="sec"'+(kw?" open":"")+'><summary>'+s.no+'　'+s.name+'<span class="muted small" style="margin-left:8px">'+s.items.length+' 目</span></summary><div class="in">';
-        (kw? secItems : s.items).forEach(it=>{
-          h += '<div class="item"><b>'+it.no+'</b>'+it.name+(it.body?'<details style="margin:4px 0 0;border:0;background:transparent"><summary style="padding:2px 0;font-size:12px;color:var(--ink-3)">展开</summary><div class="in" style="padding:2px 0 6px;font-size:13px">'+U.md(it.body)+'</div></details>':"")+"</div>";
+  document.getElementById("kpi").innerHTML = [
+    ["章", D.outline.length, "精简后仍 8 章"],
+    ["节", nSec, "二级目录"],
+    ["目", nItem, "已删 30 条不考的"],
+    ["★★★", n3, "八年 ≥3 次或每年必考"]
+  ].map(function(a){return '<div class="kpi"><div class="k">'+a[0]+'</div><div class="v">'+a[1]+'</div><div class="h">'+a[2]+'</div></div>';}).join("");
+
+  var minStar = 0, kw = "";
+  var bar = document.getElementById("fbar");
+  if (bar){
+    bar.innerHTML = [
+      [0, "全部 "+nItem], [3, "★★★ "+n3], [2, "★★以上 "+(n2+n3)], [1, "★ "+n1]
+    ].map(function(a){return '<span class="chip'+(a[0]===minStar?' on':'')+'" data-min="'+a[0]+'">'+a[1]+'</span>';}).join("");
+    bar.addEventListener("click", function(e){
+      var c = e.target.closest("[data-min]");
+      if (!c) return;
+      minStar = +c.getAttribute("data-min");
+      Array.prototype.forEach.call(bar.children, function(x){ x.classList.toggle("on", +x.getAttribute("data-min")===minStar); });
+      draw();
+    });
+  }
+
+  function starHtml(n){
+    return '<span class="st">' + "★★★".slice(0,n) + "</span>";
+  }
+
+  function draw(){
+    var h = "";
+    D.outline.forEach(function(c, ci){
+      var id = "ch" + (ci+1);
+      var ck = D.kps.filter(function(k){ return k.ch === id; });
+      var its = [];
+      c.secs.forEach(function(s){ s.items.forEach(function(it){ its.push(it); }); });
+      var show = its.filter(function(it){ return it.star >= Math.max(1, minStar); });
+      if (minStar === 0) show = its;
+      var qn = Q.filter(function(q){ return q.ch === id; }).length;
+      if (minStar > 0 || kw){
+        var hit = its.filter(function(it){
+          var s = it.star >= (minStar === 0 ? 1 : minStar);
+          var m = !kw || (it.name + it.key + it.body).toLowerCase().indexOf(kw.toLowerCase()) >= 0;
+          return s && m;
+        });
+        if (!hit.length) return;
+      }
+      h += '<details class="ch"' + ((minStar > 0 || kw) ? ' open' : '') + '><summary>第' + c.no + '章　' + c.name +
+        '<span class="muted small" style="margin-left:10px">' + c.secs.length + ' 节 · ' + its.length + ' 目 · 真题 ' + qn + ' 题</span></summary><div class="in">';
+      if (ck.length) h += '<div class="pill-row" style="margin-bottom:8px">' + ck.map(function(k){
+        return '<a class="chip acc" style="text-decoration:none" href="bank.html?kp=' + encodeURIComponent(k.name) + '">' + k.name + ' <b style="margin-left:3px">' + k.main + '</b></a>';
+      }).join("") + "</div>";
+      c.secs.forEach(function(s){
+        var list = s.items.filter(function(it){
+          if (minStar > 0 && it.star < minStar) return false;
+          if (kw && (it.name + it.key + it.body + s.name).toLowerCase().indexOf(kw.toLowerCase()) < 0) return false;
+          return true;
+        });
+        if (!list.length) return;
+        h += '<details class="sec"' + ((minStar > 0 || kw) ? ' open' : '') + '><summary>' + s.no + '　' + s.name +
+          '<span class="muted small" style="margin-left:8px">' + list.length + ' 目</span></summary><div class="in">';
+        list.forEach(function(it){
+          h += '<div class="item s' + it.star + '"><b>' + it.no + '</b> <span class="nm">' + U.esc(it.name) + '</span>' + starHtml(it.star);
+          if (it.key) h += '<div class="keyline">' + U.md(it.key).replace(/^<p>|<\/p>$/g, "") + '</div>';
+          if (it.body) h += '<details style="margin:4px 0 0;border:0;background:transparent"><summary style="padding:2px 0;font-size:12px;color:var(--ink-3)">展开补充</summary><div class="in" style="padding:2px 0 6px;font-size:13px">' + U.md(it.body) + '</div></details>';
+          h += '</div>';
         });
         h += "</div></details>";
       });
       h += "</div></details>";
     });
-    document.getElementById("tree").innerHTML = h || '<div class="empty">没有匹配的章节或知识点</div>';
+    document.getElementById("tree").innerHTML = h || '<div class="empty">这一档没有内容，换个星级或清空搜索</div>';
   }
-  render("");
-  let t;
-  document.getElementById("q").addEventListener("input", e=>{ clearTimeout(t); t = setTimeout(()=>render(e.target.value), 180); });
+
+  draw();
+  var timer;
+  document.getElementById("q").addEventListener("input", function(e){
+    clearTimeout(timer);
+    var v = e.target.value;
+    timer = setTimeout(function(){ kw = v.trim(); draw(); }, 180);
+  });
 })();
 </script>
 </body>
