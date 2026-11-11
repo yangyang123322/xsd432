@@ -363,6 +363,23 @@
     U._silent = false;
     return changed;
   };
+  /* 打包全部进度（含 ext 的复习/高亮/位置），供导出与云同步共用 */
+  U.packAll = function () {
+    function jget(k) { try { return JSON.parse(localStorage.getItem(k) || "{}") || {}; } catch (e) { return {}; } }
+    var L = [], Z = [], Q = {}, k, l, z, q;
+    l = U.get("learned", {});
+    for (k in l) if (l[k]) L.push(k);
+    z = U.get("quiz", {});
+    for (k in z) if (z[k] === 1) Z.push(String(k));
+    q = U.get("qstate", {});
+    for (k in q) if (q[k] && (q[k].done || q[k].wrong || q[k].star)) Q[k] = q[k];
+    var R = jget("ds432.rep"), R2 = {};
+    for (k in R) if ((R[k].n || 0) > 0 || (R[k].m || 0) > 0) R2[k] = R[k];
+    return JSON.stringify({
+      v: 1, ts: new Date().toISOString().slice(0, 10),
+      L: L, Z: Z, Q: Q, R: R2, H: jget("ds432.hl"), P: jget("ds432.pos")
+    });
+  };
   U.encPacked = function (s) {
     try {
       return btoa(unescape(encodeURIComponent(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -390,6 +407,8 @@
       '<div class="sync-btns"><button id="syncGen">生成本机进度码</button>' +
       '<button id="syncApply" class="primary">合并这段码并刷新</button></div>' +
       '<div class="sync-btns" style="margin-top:8px"><button id="syncLink">复制「同步链接」（推荐）</button></div>' +
+      '<div class="sync-btns" style="margin-top:8px"><button id="expBtn">导出备份（.json）</button>' +
+      '<button id="impBtn">导入备份</button><input id="impFile" type="file" accept="application/json,.json" style="display:none"></div>' +
       '<div class="sync-cloud"><div class="sync-h2">云同步（可选 · 自动双向）</div>' +
       '<div class="sync-p">粘一次 GitHub token（只需 gist 权限），两台设备用同一个 token，之后改完自动同步，不用再发链接。</div>' +
       '<input id="ghTok" placeholder="ghp_… 或 github_pat_…">' +
@@ -460,6 +479,29 @@
       $("syncMsg").textContent = "链接已生成。发到另一台设备（微信文件传输助手发给自己最快），点开即自动合并。";
     };
 
+    $("expBtn").onclick = function () {
+      try {
+        var blob = new Blob([U.packAll()], { type: "application/json" });
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "xsd432-进度-" + new Date().toISOString().slice(0, 10) + ".json";
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
+        $("syncMsg").textContent = "已导出（浏览器「下载」文件夹）；换设备时点「导入备份」选它即可。";
+      } catch (e) { $("syncMsg").textContent = "导出失败：" + e.message; }
+    };
+    $("impBtn").onclick = function () { $("impFile").click(); };
+    $("impFile").onchange = function (e) {
+      var f = e.target.files && e.target.files[0]; if (!f) return;
+      var fr = new FileReader();
+      fr.onload = function () {
+        var o; try { o = JSON.parse(fr.result); } catch (err) { $("syncMsg").textContent = "文件不是合法 JSON"; return; }
+        if (!U.applyPacked(o)) { $("syncMsg").textContent = "这个文件不是本站的进度备份"; return; }
+        $("syncMsg").textContent = "已合并，正在刷新…";
+        setTimeout(function () { location.reload(); }, 400);
+      };
+      fr.readAsText(f);
+    };
     $("syncApply").onclick = function () {
       var raw = ($("syncText").value || "").trim();
       if (!raw) { $("syncMsg").textContent = "先粘一段进度码"; return; }

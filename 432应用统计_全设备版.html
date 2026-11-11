@@ -664,6 +664,33 @@ body.xhide-undone [data-xid].is-untouched{display:none}
       return decodeURIComponent(escape(atob(t)));
     } catch (e) { return ""; }
   }
+  /* 本地备份：导出 / 导入 */
+  function extBackupInit() {
+    var exp = document.getElementById("mexpBtn"), imp = document.getElementById("mimpBtn"), file = document.getElementById("mimpFile");
+    if (!exp || !imp || !file) return;
+    exp.onclick = function () {
+      try {
+        var blob = new Blob([syncPack()], { type: "application/json" });
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "xsd432-进度-" + new Date().toISOString().slice(0, 10) + ".json";
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
+        var mt = document.getElementById("syncMsg"); if (mt) mt.textContent = "已导出到「下载」；换设备时用「导入备份」。";
+      } catch (e) {}
+    };
+    imp.onclick = function () { file.click(); };
+    file.onchange = function (e) {
+      var f = e.target.files && e.target.files[0]; if (!f) return;
+      var fr = new FileReader();
+      fr.onload = function () {
+        var o; try { o = JSON.parse(fr.result); } catch (err) { return; }
+        if (applyPacked(o)) setTimeout(function () { location.reload(); }, 400);
+      };
+      fr.readAsText(f);
+    };
+  }
+
   function syncOpen() {
     if (document.getElementById("syncWrap")) { document.getElementById("syncWrap").classList.add("on"); return; }
     var d = document.createElement("div");
@@ -673,6 +700,7 @@ body.xhide-undone [data-xid].is-untouched{display:none}
       + '<textarea id="syncText" placeholder="点「生成」得到手机上的进度码；或把电脑的码粘进来点「合并」"></textarea>'
       + '<div class="sync-btns"><button id="syncGen">生成手机进度码</button><button id="syncApply" class="primary">合并并刷新</button></div>'
       + '<div class="sync-btns" style="margin-top:8px"><button id="syncLink">复制「同步链接」（推荐）</button></div>'
+      + '<div class="sync-btns" style="margin-top:8px"><button id="mexpBtn">导出备份（.json）</button><button id="mimpBtn">导入备份</button><input id="mimpFile" type="file" accept="application/json,.json" style="display:none"></div>'
       + '<div class="sync-cloud"><div class="sync-h2">云同步（可选 · 自动双向）</div>'
       + '<div class="sync-p">粘一次 GitHub token（只需 gist 权限），两台设备用同一个 token，之后自动同步。</div>'
       + '<input id="ghTok" placeholder="ghp_… 或 github_pat_…">'
@@ -681,6 +709,7 @@ body.xhide-undone [data-xid].is-untouched{display:none}
       + '<div id="syncMsg" class="sync-msg"></div></div>';
     document.body.appendChild(d);
     d.classList.add("on");
+    try { extBackupInit(); } catch (e) {}
     var $el = function (id) { return document.getElementById(id); };
     $el("syncClose").onclick = function () { d.classList.remove("on"); };
     d.onclick = function (e) { if (e.target === d) d.classList.remove("on"); };
