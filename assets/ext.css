@@ -1,0 +1,27 @@
+/* ext.css —— 复习计数 / 掌握状态 / 文字高亮 / 断点续读 */
+.xbar{margin-top:6px;padding:5px 8px;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;color:var(--ink-3)}
+.xbar .xcount{font-weight:700;color:var(--accent);font-size:13px}
+.xbar .xstate{padding:1px 7px;border-radius:9px;background:var(--chip,#eef2f5);color:var(--ink-2);font-size:11px}
+.xbar .xstate.m1{background:#e9f2ee;color:#1f7a5c}
+.xbar .xstate.m2{background:#1f7a5c;color:#fff}
+.xbar button{border:1px solid var(--line);background:transparent;color:var(--ink-2);border-radius:7px;padding:2px 8px;font-size:11.5px;cursor:pointer;line-height:1.5}
+.xbar button:hover{border-color:var(--accent);color:var(--accent)}
+.xbar button.xm.on{background:#1f7a5c;border-color:#1f7a5c;color:#fff}
+
+.xsum{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:7px 10px;margin:0 0 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel,#fbfcfd);font-size:12.5px;color:var(--ink-2)}
+.xsum b{color:var(--accent)}
+.xsum .xf{margin-left:auto;display:flex;gap:6px}
+.xsum .xf button{border:1px solid var(--line);background:transparent;color:var(--ink-2);border-radius:8px;padding:3px 9px;font-size:12px;cursor:pointer}
+.xsum .xf button.on{background:#1f7a5c;border-color:#1f7a5c;color:#fff}
+
+mark.xhl{background:#ffe58a;color:inherit;padding:0 1px;border-radius:2px;cursor:pointer}
+[data-theme="dark"] mark.xhl{background:#7a6a1f;color:#fff}
+mark.xhl:hover{outline:1px solid #d4a017}
+body.xhide-mastered [data-xid].is-m2{display:none}
+body.xhide-undone [data-xid].is-untouched{display:none}
+
+#xhlbar{position:fixed;z-index:9999;display:none;gap:6px;padding:5px 6px;background:#fff;border:1px solid #d7dce3;border-radius:9px;box-shadow:0 6px 20px rgba(0,0,0,.14)}
+#xhlbar button{border:0;background:#f2f6f4;color:#1d2733;border-radius:6px;padding:4px 9px;font-size:12px;cursor:pointer}
+#xhlbar button:hover{background:#e3efe9}
+#xhlbar .xdel{background:#fdf0ef;color:#c0392b}
+#xerr{position:fixed;left:8px;bottom:8px;z-index:99999;max-width:70vw;background:#fff3cd;color:#7a5b00;border:1px solid #e0c36a;border-radius:8px;padding:6px 9px;font:12px/1.4 monospace;white-space:pre-wrap;display:none}

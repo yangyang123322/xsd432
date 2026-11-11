@@ -24,6 +24,7 @@
   .pill-row.f .chip{cursor:pointer}
   .pill-row.f .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 </style>
+<link rel="stylesheet" href="assets/ext.css">
 </head>
 <body data-page="concepts.html">
 <div class="shell">
@@ -54,6 +55,7 @@
 <script src="data/data.js"></script>
 <script src="assets/katex/katex.min.js"></script>
 <script src="assets/app.js"></script>
+<script src="assets/ext.js"></script>
 <script>
 U.boot("concepts.html");
 (function(){
@@ -92,7 +94,7 @@ U.boot("concepts.html");
       return true;
     });
     document.getElementById("list").innerHTML = list.map(c=>{
-      let h = '<div class="cc"><h3><span class="mono small muted">【'+c.no+'】</span>'+U.esc(c.title)+'<span class="st">'+"★".repeat(c.star)+'</span><span class="chip">第'+c.ch+'章</span></h3>';
+      let h = '<div class="cc" data-xid="cx:'+c.no+'" id="c'+c.no+'"><h3><span class="mono small muted">【'+c.no+'】</span>'+U.esc(c.title)+'<span class="st">'+"★".repeat(c.star)+'</span><span class="chip">第'+c.ch+'章</span></h3>';
       h += '<div class="one">'+U.md(c.one)+'</div>';
       const inl = s => U.md(s).replace(/^<p>|<\/p>$/g,"");
       if (c.bx2){

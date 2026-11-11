@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="assets/katex/katex.min.css">
 <link rel="stylesheet" href="assets/app.css">
 <script>document.documentElement.setAttribute('data-theme',localStorage.getItem('ds432.theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'))</script>
+<link rel="stylesheet" href="assets/ext.css">
 </head>
 <body data-page="chapters.html">
 <div class="shell">
@@ -38,6 +39,7 @@
 <script src="data/data.js"></script>
 <script src="assets/katex/katex.min.js"></script>
 <script src="assets/app.js"></script>
+<script src="assets/ext.js"></script>
 <script>
 U.boot("chapters.html");
 (function(){
@@ -109,7 +111,7 @@ U.boot("chapters.html");
         h += '<details class="sec"' + ((minStar > 0 || kw) ? ' open' : '') + '><summary>' + s.no + '　' + s.name +
           '<span class="muted small" style="margin-left:8px">' + list.length + ' 目</span></summary><div class="in">';
         list.forEach(function(it){
-          h += '<div class="item s' + it.star + '"><b>' + it.no + '</b> <span class="nm">' + U.esc(it.name) + '</span>' + starHtml(it.star);
+          h += '<div class="item s' + it.star + '" data-xid="ch:' + it.no + '"><b>' + it.no + '</b> <span class="nm">' + U.esc(it.name) + '</span>' + starHtml(it.star);
           if (it.key) h += '<div class="keyline">' + U.md(it.key).replace(/^<p>|<\/p>$/g, "") + '</div>';
           if (it.body) h += '<details style="margin:4px 0 0;border:0;background:transparent"><summary style="padding:2px 0;font-size:12px;color:var(--ink-3)">展开补充</summary><div class="in" style="padding:2px 0 6px;font-size:13px">' + U.md(it.body) + '</div></details>';
           h += '</div>';
