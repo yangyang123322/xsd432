@@ -10,7 +10,12 @@
   var K_REP = "ds432.rep", K_HL = "ds432.hl", K_POS = "ds432.pos";
 
   function load(k) { try { return JSON.parse(localStorage.getItem(k) || "{}") || {}; } catch (e) { return {}; } }
-  function persist(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function persist(k, v) {
+    try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {}
+    if (k !== K_POS) {
+      try { window.dispatchEvent(new CustomEvent("ds432:ext-change", { detail: k })); } catch (e) {}
+    }
+  }
 
   var REP = load(K_REP), HL = load(K_HL), POS = load(K_POS);
 

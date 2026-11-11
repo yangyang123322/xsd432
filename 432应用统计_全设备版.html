@@ -604,14 +604,23 @@ body.xhide-undone [data-xid].is-untouched{display:none}
   window.__onProgress = function (k) { if (k === "m_learned" || k === "m_quiz") cloud.pushLater(); };
 
   function syncPack() {
+    function jget(k) { try { return JSON.parse(localStorage.getItem(k) || "{}") || {}; } catch (e) { return {}; } }
+    var R = jget("ds432.rep"), R2 = {}, x;
+    for (x in R) { if ((R[x].n || 0) > 0 || (R[x].m || 0) > 0) R2[x] = R[x]; }
     return JSON.stringify({
       v: 1,
       ts: new Date().toISOString().slice(0, 10),
       L: Object.keys(learned),
       Z: Object.keys(quizDone),
-      Q: {}
+      Q: {},
+      R: R2,
+      H: jget("ds432.hl"),
+      P: jget("ds432.pos")
     });
   }
+  /* 复习/高亮变化 → 触发云同步 */
+  window.addEventListener("ds432:ext-change", function () { try { cloud.pushLater(); } catch (e) {} });
+
   function applyPacked(o) {
     if (!o || o.v !== 1) return false;
     var changed = false;
@@ -619,6 +628,28 @@ body.xhide-undone [data-xid].is-untouched{display:none}
     (o.L || []).forEach(function (id) { if (!learned[id]) { learned[id] = 1; changed = true; } });
     (o.Z || []).forEach(function (k) { if (!quizDone[String(k)]) { quizDone[String(k)] = 1; changed = true; } });
     saveLearned(); saveQuiz();
+    /* —— ext 数据：复习计数 / 高亮 / 位置 —— */
+    function jget(k) { try { return JSON.parse(localStorage.getItem(k) || "{}") || {}; } catch (e) { return {}; } }
+    function jset(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+    var R = jget("ds432.rep"), srcR = o.R || {}, x, a, b;
+    for (x in srcR) {
+      a = R[x] || { n: 0, t: 0, m: 0 }; b = srcR[x] || {};
+      var nn = Math.max(a.n || 0, b.n || 0), mm = Math.max(a.m || 0, b.m || 0), tt = Math.max(a.t || 0, b.t || 0);
+      if (nn !== (a.n || 0) || mm !== (a.m || 0) || tt !== (a.t || 0)) { R[x] = { n: nn, m: mm, t: tt }; changed = true; }
+    }
+    if (Object.keys(srcR).length) jset("ds432.rep", R);
+    var H = jget("ds432.hl"), srcH = o.H || {};
+    for (x in srcH) {
+      var mine = H[x] || [], seen = {}, i;
+      for (i = 0; i < mine.length; i++) seen[mine[i].i] = 1;
+      var arr = srcH[x] || [];
+      for (i = 0; i < arr.length; i++) { var r = arr[i]; if (!r || !r.i || seen[r.i]) continue; mine.push(r); seen[r.i] = 1; changed = true; }
+      H[x] = mine;
+    }
+    if (Object.keys(srcH).length) jset("ds432.hl", H);
+    var PO = jget("ds432.pos"), srcP = o.P || {};
+    for (x in srcP) { a = PO[x]; b = srcP[x]; if (b && (!a || (b.t || 0) > (a.t || 0))) { PO[x] = b; changed = true; } }
+    if (Object.keys(srcP).length) jset("ds432.pos", PO);
     window.__silent = false;
     return changed;
   }
@@ -715,7 +746,12 @@ body.xhide-undone [data-xid].is-untouched{display:none}
   var K_REP = "ds432.rep", K_HL = "ds432.hl", K_POS = "ds432.pos";
 
   function load(k) { try { return JSON.parse(localStorage.getItem(k) || "{}") || {}; } catch (e) { return {}; } }
-  function persist(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function persist(k, v) {
+    try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {}
+    if (k !== K_POS) {
+      try { window.dispatchEvent(new CustomEvent("ds432:ext-change", { detail: k })); } catch (e) {}
+    }
+  }
 
   var REP = load(K_REP), HL = load(K_HL), POS = load(K_POS);
 
