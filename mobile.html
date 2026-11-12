@@ -195,6 +195,16 @@ body.xdue [data-xid]:not(.is-due){ display:none !important; }
 /* ---- 汇总条里的开关 ---- */
 .xsum .xt.on{ background:#1f7a5c; color:#fff; border-color:#1f7a5c; }
 .xsum b.xd{ color:#c0392b; }
+
+/* ---- 窄屏收紧 ---- */
+@media (max-width: 560px){
+  .xsum{ font-size:11px; gap:4px; }
+  .xsum .xf{ gap:4px; }
+  .xsum .xf button{ padding:1px 6px; font-size:11px; white-space:nowrap; }
+  .xbar{ font-size:11px; gap:4px; }
+  .xbar .xg{ padding:0 6px; font-size:11px; white-space:nowrap; }
+  .xbar .xdue{ font-size:11px; }
+}
 </style>
 </head>
 <body>
