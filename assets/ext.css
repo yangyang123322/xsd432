@@ -25,3 +25,23 @@ body.xhide-undone [data-xid].is-untouched{display:none}
 #xhlbar button:hover{background:#e3efe9}
 #xhlbar .xdel{background:#fdf0ef;color:#c0392b}
 #xerr{position:fixed;left:8px;bottom:8px;z-index:99999;max-width:70vw;background:#fff3cd;color:#7a5b00;border:1px solid #e0c36a;border-radius:8px;padding:6px 9px;font:12px/1.4 monospace;white-space:pre-wrap;display:none}
+
+/* ---- 到期筛选 ---- */
+body.xdue [data-xid]:not(.is-due){ display:none !important; }
+
+/* ---- 三档评分按钮 ---- */
+.xbar .xg{ border:1px solid var(--line,#dfe4ec); background:#fff; color:#3b4452; border-radius:6px; padding:1px 7px; margin-left:4px; font-size:11.5px; cursor:pointer; }
+.xbar .xg:hover{ background:#f4f6f9; }
+.xbar .xg.again{ border-color:#e6b8b3; color:#b03a2e; }
+.xbar .xg.fuzzy{ border-color:#e3d3a8; color:#8a6d1f; }
+.xbar .xg.known{ border-color:#b6d3bf; color:#1f6f52; }
+.xbar .xdue{ margin-left:6px; font-size:11.5px; color:#c0392b; }
+
+/* ---- 挖空 ---- */
+.xcl{ background:#eef3ff; border-bottom:1px dashed #91a7c8; border-radius:3px; padding:0 5px; cursor:pointer; color:#5a6b8c; }
+.xcl.on{ background:#fff6d6; border-bottom-color:#c9a227; color:#222; }
+.xpkg{ background:#f5f6f8; border-radius:4px; padding:1px 5px; color:#8a93a2; cursor:pointer; }
+
+/* ---- 汇总条里的开关 ---- */
+.xsum .xt.on{ background:#1f7a5c; color:#fff; border-color:#1f7a5c; }
+.xsum b.xd{ color:#c0392b; }

@@ -175,6 +175,26 @@ body.xhide-undone [data-xid].is-untouched{display:none}
 #xhlbar button:hover{background:#e3efe9}
 #xhlbar .xdel{background:#fdf0ef;color:#c0392b}
 #xerr{position:fixed;left:8px;bottom:8px;z-index:99999;max-width:70vw;background:#fff3cd;color:#7a5b00;border:1px solid #e0c36a;border-radius:8px;padding:6px 9px;font:12px/1.4 monospace;white-space:pre-wrap;display:none}
+
+/* ---- 到期筛选 ---- */
+body.xdue [data-xid]:not(.is-due){ display:none !important; }
+
+/* ---- 三档评分按钮 ---- */
+.xbar .xg{ border:1px solid var(--line,#dfe4ec); background:#fff; color:#3b4452; border-radius:6px; padding:1px 7px; margin-left:4px; font-size:11.5px; cursor:pointer; }
+.xbar .xg:hover{ background:#f4f6f9; }
+.xbar .xg.again{ border-color:#e6b8b3; color:#b03a2e; }
+.xbar .xg.fuzzy{ border-color:#e3d3a8; color:#8a6d1f; }
+.xbar .xg.known{ border-color:#b6d3bf; color:#1f6f52; }
+.xbar .xdue{ margin-left:6px; font-size:11.5px; color:#c0392b; }
+
+/* ---- 挖空 ---- */
+.xcl{ background:#eef3ff; border-bottom:1px dashed #91a7c8; border-radius:3px; padding:0 5px; cursor:pointer; color:#5a6b8c; }
+.xcl.on{ background:#fff6d6; border-bottom-color:#c9a227; color:#222; }
+.xpkg{ background:#f5f6f8; border-radius:4px; padding:1px 5px; color:#8a93a2; cursor:pointer; }
+
+/* ---- 汇总条里的开关 ---- */
+.xsum .xt.on{ background:#1f7a5c; color:#fff; border-color:#1f7a5c; }
+.xsum b.xd{ color:#c0392b; }
 </style>
 </head>
 <body>
@@ -801,8 +821,51 @@ body.xhide-undone [data-xid].is-untouched{display:none}
   var STATE_TXT = ["未掌握", "学习中", "已掌握"];
   var STATE_CLS = ["", "m1", "m2"];
 
-  function rec(xid) { return REP[xid] || { n: 0, t: 0, m: 0 }; }
+  function pad2(n) { return n < 10 ? "0" + n : "" + n; }
+  function todayStr(d) {
+    d = d || new Date();
+    return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+  }
+  function addDays(s, n) {
+    var p = String(s).split("-");
+    var d = new Date(+p[0], +p[1] - 1, +p[2]);
+    d.setDate(d.getDate() + n);
+    return todayStr(d);
+  }
+
+  function rec(xid) {
+    var r = REP[xid] || {};
+    if (typeof r.n !== "number") r.n = 0;
+    if (typeof r.m !== "number") r.m = 0;
+    if (!r.t) r.t = 0;
+    if (typeof r.ef !== "number") r.ef = 2.5;
+    if (typeof r.iv !== "number") r.iv = 0;
+    if (typeof r.lp !== "number") r.lp = 0;
+    if (!r.due) r.due = todayStr();      // 从没复习过 → 今天到期
+    return r;
+  }
   function setRec(xid, o) { REP[xid] = o; persist(K_REP, REP); }
+  function isDue(r) { return !r.due || r.due <= todayStr(); }
+
+  // 三档评分：忘记 / 模糊 / 熟悉 → 不同间隔
+  function gradeRec(xid, g) {
+    var r = rec(xid), T = todayStr();
+    r.n += 1; r.t = Date.now();
+    if (g === "again") {                        // 忘记：当天再来，难度上调
+      r.lp += 1; r.ef = Math.max(1.3, r.ef - 0.2);
+      r.iv = 0; r.due = T; r.m = 0;
+    } else if (g === "fuzzy") {                 // 模糊：短间隔 +20%
+      r.ef = Math.max(1.3, r.ef - 0.05);
+      r.iv = r.iv <= 0 ? 1 : Math.max(1, Math.round(r.iv * 1.2));
+      r.due = addDays(T, r.iv); r.m = 1;
+    } else {                                    // 熟悉：长间隔 ×EF
+      r.ef = Math.min(3.0, r.ef + 0.1);
+      r.iv = r.iv <= 0 ? 3 : (r.iv <= 3 ? 7 : Math.round(r.iv * r.ef));
+      r.due = addDays(T, r.iv); r.m = 2;
+    }
+    setRec(xid, r);
+    return r;
+  }
   function fmtDate(t) {
     if (!t) return "未记";
     var d = new Date(t);
@@ -984,22 +1047,19 @@ body.xhide-undone [data-xid].is-untouched{display:none}
     var r = rec(xid);
     var bar = document.createElement("div");
     bar.className = "xbar";
+    var dueTxt = isDue(r) ? "今天到期" : ("下次 " + r.due);
     bar.innerHTML =
-      '<span>复习</span><span class="xcount">' + r.n + '</span><span>次</span>' +
-      '<button data-x="inc">+1 复习</button>' +
-      '<button data-x="dec" title="少算一次">−1</button>' +
+      '<span>已复习</span><span class="xcount">' + r.n + '</span><span>次</span>' +
+      '<button data-x="again" class="xg again" title="忘了：今天再来一遍">忘记</button>' +
+      '<button data-x="fuzzy" class="xg fuzzy" title="模糊：短间隔再来">模糊</button>' +
+      '<button data-x="known" class="xg known" title="熟悉：拉长间隔">熟悉</button>' +
       '<span class="xstate ' + STATE_CLS[r.m] + '">' + STATE_TXT[r.m] + '</span>' +
-      '<button data-x="m" class="xm' + (r.m === 2 ? " on" : "") + '">' + (r.m === 2 ? "✓ 已掌握" : "标为掌握") + '</button>' +
-      '<span style="margin-left:auto;color:#9aa4b2">上次 ' + fmtDate(r.t) + '</span>';
+      '<span class="xdue">' + dueTxt + '</span>' +
+      '<span style="margin-left:auto;color:#9aa4b2">' + (r.iv ? ("间隔 " + r.iv + " 天") : "未排期") + ' · 上次 ' + fmtDate(r.t) + '</span>';
     bar.addEventListener("click", function (e) {
       var b = e.target.closest("[data-x]"); if (!b) return;
       e.preventDefault(); e.stopPropagation();
-      var cur = rec(xid);
-      var act = b.getAttribute("data-x");
-      if (act === "inc") { cur.n += 1; cur.t = Date.now(); if (cur.m === 0) cur.m = 1; }
-      if (act === "dec") { cur.n = Math.max(0, cur.n - 1); }
-      if (act === "m") { cur.m = (cur.m + 1) % 3; if (cur.m === 2 && !cur.n) cur.n = 1; cur.t = Date.now(); }
-      setRec(xid, cur);
+      gradeRec(xid, b.getAttribute("data-x"));
       renderItem(item, xid);
       updateSum();
     });
@@ -1021,7 +1081,91 @@ body.xhide-undone [data-xid].is-untouched{display:none}
     var r = rec(xid);
     item.classList.toggle("is-m2", r.m === 2);
     item.classList.toggle("is-untouched", !r.n && !r.m);
+    item.classList.toggle("is-due", isDue(r));
+    if (CLOZE) clozeApply(item);
+    if (PEEK) peekApply(item);
   }
+
+  /* ---------------- 到期 / 挖空 / 首字 ---------------- */
+  var CLOZE = false, PEEK = false;
+
+  function dueCount() {
+    var host = sumHost(); if (!host) return 0;
+    var c = 0;
+    Array.prototype.forEach.call(host.querySelectorAll("[data-xid]"), function (el) {
+      if (isDue(rec(el.getAttribute("data-xid")))) c++;
+    });
+    return c;
+  }
+
+  // 把一个条目里的原始 HTML 备份一次，便于关掉开关时还原
+  function backup(el) {
+    if (!el.getAttribute("data-xorig")) el.setAttribute("data-xorig", el.innerHTML);
+  }
+  function restoreAll() {
+    Array.prototype.forEach.call(document.querySelectorAll("[data-xorig]"), function (el) {
+      el.innerHTML = el.getAttribute("data-xorig");
+      el.removeAttribute("data-xorig");
+    });
+  }
+
+  // 挖空：把段落里渲染好的公式（KaTeX 节点）与百分数变成 ____，点击揭示
+  var CB = {}, cbn = 0;
+  function clozeApply(item) {
+    Array.prototype.forEach.call(item.querySelectorAll(".tx p, .tx3 p, .keyline"), function (el) {
+      if (el.querySelector(".xcl")) return;
+      var ks = Array.prototype.filter.call(el.querySelectorAll(".katex"), function (k) {
+        return !(k.parentNode && k.parentNode.closest && k.parentNode.closest(".katex"));
+      });
+      if (!ks.length) return;
+      backup(el);
+      ks.forEach(function (k) {
+        var id = "c" + (++cbn);
+        CB[id] = k.outerHTML;
+        var s = document.createElement("span");
+        s.className = "xcl";
+        s.setAttribute("data-k", id);
+        s.textContent = "____";
+        k.parentNode.replaceChild(s, k);
+      });
+    });
+  }
+
+  // 首字提示：只留前 6 个字，点击展开
+  function peekApply(item) {
+    Array.prototype.forEach.call(item.querySelectorAll(".tx3 p, .tx p, .keyline"), function (el) {
+      if (el.querySelector(".xpkg")) return;
+      backup(el);
+      var txt = el.textContent.replace(/\s+/g, " ").trim();
+      if (txt.length < 18) return;
+      el.innerHTML = '<span class="xpkg" title="点击展开">' + txt.slice(0, 6) + '……</span>';
+    });
+  }
+
+  // 揭示
+  document.addEventListener("click", function (e) {
+    var c = e.target.closest(".xcl");
+    if (c) {
+      e.preventDefault(); e.stopPropagation();
+      var kid = c.getAttribute("data-k");
+      if (kid && CB[kid]) {
+        var box = document.createElement("span");
+        box.innerHTML = CB[kid];
+        c.parentNode.replaceChild(box.firstChild, c);
+        return;
+      }
+      var v = c.getAttribute("data-v");
+      if (v) { c.textContent = decodeURIComponent(v); c.classList.add("on"); }
+      return;
+    }
+    var p = e.target.closest(".xpkg");
+    if (p) {
+      e.preventDefault(); e.stopPropagation();
+      var box = p.parentNode;
+      box.innerHTML = box.getAttribute("data-xorig") || p.textContent;
+      return;
+    }
+  }, true);
 
   /* ---------------- 汇总条 ---------------- */
   var sumEl = null;
@@ -1036,14 +1180,31 @@ body.xhide-undone [data-xid].is-untouched{display:none}
     sumEl.className = "xsum";
     host.parentNode.insertBefore(sumEl, host);
     sumEl.addEventListener("click", function (e) {
+      var sw = e.target.closest("[data-t]");
+      if (sw) {
+        var k = sw.getAttribute("data-t");
+        if (k === "cloze") { CLOZE = !CLOZE; if (CLOZE) PEEK = false; }
+        if (k === "peek") { PEEK = !PEEK; if (PEEK) CLOZE = false; }
+        restoreAll();
+        // 开关变化要重绘所有条目（scan 默认跳过已处理的），只清 xdone，不丢高亮签名
+        Array.prototype.forEach.call(document.querySelectorAll("[data-xid]"), function (el) {
+          el.removeAttribute("data-xdone");
+          el.removeAttribute("data-xsig");
+        });
+        scan();
+        updateSum();
+        return;
+      }
       var b = e.target.closest("[data-f]"); if (!b) return;
       var f = b.getAttribute("data-f");
-      document.body.classList.remove("xhide-mastered", "xhide-undone");
+      document.body.classList.remove("xhide-mastered", "xhide-undone", "xdue");
       if (f === "unmastered") document.body.classList.add("xhide-mastered");
       if (f === "undone") document.body.classList.add("xhide-undone");
+      if (f === "due") document.body.classList.add("xdue");
       Array.prototype.forEach.call(sumEl.querySelectorAll("[data-f]"), function (x) {
         x.classList.toggle("on", x.getAttribute("data-f") === f);
       });
+      return;
     });
     return sumEl;
   }
@@ -1057,10 +1218,17 @@ body.xhide-undone [data-xid].is-untouched{display:none}
       if (r.m === 2) m2++; else if (r.m === 1) m1++;
       n += r.n || 0;
     });
-    s.innerHTML = '本页 <b>' + tot + '</b> 条 · 已掌握 <b>' + m2 + '</b> · 学习中 <b>' + m1 + '</b> · 复习合计 <b>' + n + '</b> 次' +
+    var dc = 0;
+    Array.prototype.forEach.call(items, function (el) {
+      if (isDue(rec(el.getAttribute("data-xid")))) dc++;
+    });
+    s.innerHTML = '本页 <b>' + tot + '</b> 条 · 已掌握 <b>' + m2 + '</b> · 学习中 <b>' + m1 + '</b> · 今日到期 <b class="xd">' + dc + '</b>' +
       '<span class="xf"><button data-f="all" class="on">全部</button>' +
+      '<button data-f="due">今日到期 ' + dc + '</button>' +
       '<button data-f="unmastered">只看未掌握</button>' +
-      '<button data-f="undone">只看没复习过</button></span>';
+      '<button data-f="undone">只看没复习过</button>' +
+      '<button data-t="cloze" class="xt' + (CLOZE ? " on" : "") + '">挖空</button>' +
+      '<button data-t="peek" class="xt' + (PEEK ? " on" : "") + '">首字</button></span>';
   }
 
   /* ---------------- 断点续读 ---------------- */
@@ -1131,6 +1299,9 @@ body.xhide-undone [data-xid].is-untouched{display:none}
   }
 
   function boot() {
+    if (/[#&]due=1/.test(location.hash)) {
+      document.body.classList.add("xdue");
+    }
     scan();
     observe();
     setTimeout(function () { restorePos(); scan(); }, 120);

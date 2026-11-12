@@ -122,6 +122,17 @@ U.boot("index.html");
   D.qs.forEach(q => { const s = U.qs.get(q.id); if (s.acc === undefined) return; (acc[q.kp] = acc[q.kp] || []).push(s.acc); });
   const weak = Object.entries(acc).map(([k,v]) => [k, v.reduce((a,b)=>a+b,0)/v.length]).sort((a,b)=>a[1]-b[1]).slice(0,2);
   if (weak.length) todo.push(["弱考点", weak.map(w=>w[0]).join(" / "), "review.html"]);
+  (function(){
+    var due = 0;
+    try { var rep = JSON.parse(localStorage.getItem("ds432.rep")||"{}");
+      var T = new Date(), ts = T.getFullYear()+"-"+(T.getMonth()+1<10?"0":"")+(T.getMonth()+1)+"-"+(T.getDate()<10?"0":"")+T.getDate();
+      for (var k in rep){ var r = rep[k]; if (!r || !r.due || r.due <= ts) due++; }
+    } catch(e){}
+    var started = Object.keys(rep || {}).length > 0;
+    var txt = !started ? "辨析 87 条还没排期，从今天开始"
+            : (due ? ("到期 " + due + " 条（辨析/考纲树）") : "今天没有到期的，可预习");
+    todo.push(["今天该背", txt, "concepts.html#due=1"]);
+  })();
   if (!todo.some(t=>t[0]==="今天先背")) todo.push(["今天先背", "辨析卡 ★★★ 27 组", "concepts.html"]);
   if (todo.length < 3) todo.push(["没思路时", "破题诀 34 招（识别信号→固定动作）", "pojue.html"]);
   if (todo.length < 4) todo.push(["先看清卷面", "八套卷结构与分值", "structure.html"]);
