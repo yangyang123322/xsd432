@@ -1193,6 +1193,7 @@ body.xdue [data-xid]:not(.is-due){ display:none !important; }
       var sw = e.target.closest("[data-t]");
       if (sw) {
         var k = sw.getAttribute("data-t");
+        if (k === "flash") { location.href = "flash.html?src=" + (PAGE.indexOf("chapters") >= 0 ? "chapters" : (PAGE.indexOf("concepts") >= 0 ? "concepts" : "all")); return; }
         if (k === "cloze") { CLOZE = !CLOZE; if (CLOZE) PEEK = false; }
         if (k === "peek") { PEEK = !PEEK; if (PEEK) CLOZE = false; }
         restoreAll();
@@ -1238,7 +1239,8 @@ body.xdue [data-xid]:not(.is-due){ display:none !important; }
       '<button data-f="unmastered">只看未掌握</button>' +
       '<button data-f="undone">只看没复习过</button>' +
       '<button data-t="cloze" class="xt' + (CLOZE ? " on" : "") + '">挖空</button>' +
-      '<button data-t="peek" class="xt' + (PEEK ? " on" : "") + '">首字</button></span>';
+      '<button data-t="peek" class="xt' + (PEEK ? " on" : "") + '">首字</button>' +
+      (/^https?:/.test(location.protocol) ? '<button data-t="flash" class="xt xflash">闪卡</button>' : '') + '</span>';
   }
 
   /* ---------------- 断点续读 ---------------- */

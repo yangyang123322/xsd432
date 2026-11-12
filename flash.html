@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>闪卡 · 432 背诵</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<style>
+  :root{ --bg:#f7f8fa; --card:#fff; --ink:#1c2430; --ink2:#4a5566; --mut:#8b95a5; --line:#e3e7ee; --acc:#1f7a5c; --red:#c0392b; --amber:#b8860b; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--ink); font:16px/1.7 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif; }
+  .wrap{ max-width:760px; margin:0 auto; padding:18px 16px 120px; }
+  .top{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .top h1{ font-size:18px; margin:0; letter-spacing:.5px; }
+  .top .src{ margin-left:auto; font-size:12px; color:var(--mut); }
+  .bar{ height:6px; background:#e9edf3; border-radius:99px; overflow:hidden; margin-bottom:14px; }
+  .bar i{ display:block; height:100%; background:linear-gradient(90deg,#2f9e78,#1f7a5c); width:0; transition:width .25s; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px 22px 18px; box-shadow:0 6px 22px rgba(20,30,50,.06); }
+  .tag{ display:inline-block; font-size:11.5px; color:var(--mut); border:1px solid var(--line); border-radius:999px; padding:1px 9px; margin-right:6px; }
+  .tag.st{ color:#b8860b; border-color:#efe0b8; background:#fdf8ea; }
+  h2{ font-size:20px; line-height:1.5; margin:10px 0 6px; }
+  .hint{ color:var(--mut); font-size:13px; }
+  .answer{ margin-top:16px; padding-top:16px; border-top:1px dashed var(--line); display:none; }
+  .answer.on{ display:block; }
+  .answer p{ margin:.5em 0; }
+  .answer ul{ margin:.4em 0 .8em 1.1em; padding:0; }
+  .answer li{ margin:.25em 0; }
+  .lab{ color:var(--acc); font-weight:700; margin-right:4px; }
+  .katex{ font-size:1.02em; }
+  .btns{ position:fixed; left:0; right:0; bottom:0; background:rgba(247,248,250,.96); border-top:1px solid var(--line); padding:10px 16px 16px; backdrop-filter:blur(6px); }
+  .btns .in{ max-width:760px; margin:0 auto; display:flex; gap:8px; }
+  .btns button{ flex:1; border:1px solid var(--line); background:#fff; border-radius:12px; padding:11px 6px; font-size:15px; font-weight:600; cursor:pointer; }
+  .btns button small{ display:block; font-weight:400; font-size:11px; color:var(--mut); margin-top:2px; }
+  .b-again{ color:var(--red); border-color:#f0c9c4 !important; }
+  .b-fuzzy{ color:var(--amber); border-color:#efe0b8 !important; }
+  .b-known{ color:var(--acc); border-color:#bfdccc !important; }
+  .b-show{ background:#1f7a5c !important; color:#fff; border-color:#1f7a5c !important; flex:2 !important; }
+  .end{ text-align:center; padding:26px 10px; }
+  .end h2{ font-size:22px; }
+  .stat{ display:flex; gap:10px; justify-content:center; margin:14px 0 20px; flex-wrap:wrap; }
+  .stat div{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 16px; min-width:88px; }
+  .stat b{ display:block; font-size:22px; }
+  .stat span{ font-size:12px; color:var(--mut); }
+  .end a, .end button{ display:inline-block; margin:4px 6px; padding:10px 16px; border-radius:10px; text-decoration:none; font-size:14px; }
+  .end a{ background:#1f7a5c; color:#fff; }
+  .end button{ background:#fff; border:1px solid var(--line); cursor:pointer; }
+  .empty{ color:var(--mut); text-align:center; padding:40px 10px; }
+</style>
+</head>
+<body data-page="flash.html">
+<div class="wrap">
+  <div class="top">
+    <h1>闪卡</h1>
+    <span class="src" id="srcTag"></span>
+  </div>
+  <div class="bar"><i id="prog"></i></div>
+  <div id="stage"></div>
+</div>
+
+<div class="btns" id="btns" style="display:none">
+  <div class="in">
+    <button class="b-show" id="showBtn">显示答案<small>空格</small></button>
+    <button class="b-again" id="gAgain" style="display:none">忘记<small>1</small></button>
+    <button class="b-fuzzy" id="gFuzzy" style="display:none">模糊<small>2</small></button>
+    <button class="b-known" id="gKnown" style="display:none">熟悉<small>3</small></button>
+  </div>
+</div>
+
+<script src="assets/katex/katex.min.js"></script>
+<script src="data/data.js"></script>
+<script>
+(function () {
+  "use strict";
+  var K_REP = "ds432.rep";
+  var REP = {};
+  try { REP = JSON.parse(localStorage.getItem(K_REP) || "{}") || {}; } catch (e) { REP = {}; }
+
+  function pad2(n){ return n<10?"0"+n:""+n; }
+  function today(d){ d=d||new Date(); return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
+  function addDays(s,n){ var p=String(s).split("-"); var d=new Date(+p[0],+p[1]-1,+p[2]); d.setDate(d.getDate()+n); return today(d); }
+  function rec(xid){
+    var r = REP[xid] || {};
+    if (typeof r.n !== "number") r.n = 0;
+    if (typeof r.m !== "number") r.m = 0;
+    if (typeof r.ef !== "number") r.ef = 2.5;
+    if (typeof r.iv !== "number") r.iv = 0;
+    if (typeof r.lp !== "number") r.lp = 0;
+    if (!r.due) r.due = today();
+    return r;
+  }
+  function isDue(r){ return !r.due || r.due <= today(); }
+  function save(){ try { localStorage.setItem(K_REP, JSON.stringify(REP)); } catch(e){} }
+  function grade(xid,g){
+    var r=rec(xid), T=today();
+    r.n++; r.t=Date.now();
+    if (g==="again"){ r.lp++; r.ef=Math.max(1.3,r.ef-0.2); r.iv=0; r.due=T; r.m=0; }
+    else if (g==="fuzzy"){ r.ef=Math.max(1.3,r.ef-0.05); r.iv=r.iv<=0?1:Math.max(1,Math.round(r.iv*1.2)); r.due=addDays(T,r.iv); r.m=1; }
+    else { r.ef=Math.min(3.0,r.ef+0.1); r.iv=r.iv<=0?3:(r.iv<=3?7:Math.round(r.iv*r.ef)); r.due=addDays(T,r.iv); r.m=2; }
+    REP[xid]=r; save();
+    return r;
+  }
+
+  /* ---- 极简 markdown：转义 → 加粗/行内码/列表/公式 ---- */
+  function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function tex(s, disp){
+    try { return katex.renderToString(s, { displayMode: !!disp, throwOnError: false, strict: false }); }
+    catch (e) { return esc(s); }
+  }
+  function inline(s){
+    s = esc(s);
+    s = s.replace(/\$\$([\s\S]+?)\$\$/g, function(_, b){ return tex(b, true); });
+    s = s.replace(/\$([^$\n]+?)\$/g, function(_, b){ return tex(b, false); });
+    s = s.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+    s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
+    return s;
+  }
+  function md(src){
+    var out = [], list = null;
+    String(src||"").split(/\n/).forEach(function (line) {
+      var t = line.trim();
+      if (/^[-*]\s+/.test(t)) {
+        if (!list) { out.push("<ul>"); list = true; }
+        out.push("<li>" + inline(t.replace(/^[-*]\s+/, "")) + "</li>");
+        return;
+      }
+      if (list) { out.push("</ul>"); list = null; }
+      if (!t) return;
+      out.push("<p>" + inline(t) + "</p>");
+    });
+    if (list) out.push("</ul>");
+    return out.join("");
+  }
+
+  /* ---- 组队列 ---- */
+  var SRC = (location.search.match(/[?&]src=(\w+)/) || [])[1] || "all";
+  var items = [];
+  if (SRC === "all" || SRC === "concepts") {
+    (DATA.concepts || []).forEach(function (c) {
+      var body = "";
+      if (c.bx2) body = '<p><b class="lab">定义</b>' + c.bx2.def + '</p><p><b class="lab">区别</b>' + c.bx2.diff + '</p><p><b class="lab">联系</b>' + c.bx2.link + '</p>';
+      else if (c.one) body = '<p>' + c.one + '</p>';
+      items.push({ xid: "cx:" + c.no, kind: "辨析", title: "【" + c.no + "】" + c.title, star: c.star, body: md(body.replace(/<\/?p>/g, "\n")) });
+    });
+  }
+  if (SRC === "all" || SRC === "chapters") {
+    (DATA.outline || []).forEach(function (ch) {
+      (ch.secs || []).forEach(function (sec) {
+        (sec.items || []).forEach(function (it) {
+          items.push({ xid: "ch:" + it.no, kind: "考纲", title: it.no + " " + it.name, star: +it.star || 1, body: md((it.key || "") + "\n" + (it.body || "")) });
+        });
+      });
+    });
+  }
+
+  var queue = items.filter(function (x) { return isDue(rec(x.xid)); })
+                   .sort(function (a, b) { return (b.star - a.star) || a.xid.localeCompare(b.xid); });
+
+  var stage = document.getElementById("stage"), prog = document.getElementById("prog");
+  var btns = document.getElementById("btns"), showBtn = document.getElementById("showBtn");
+  var gA = document.getElementById("gAgain"), gF = document.getElementById("gFuzzy"), gK = document.getElementById("gKnown");
+  document.getElementById("srcTag").textContent = "到期 " + queue.length + " 条 · " + (SRC === "all" ? "辨析+考纲" : (SRC === "concepts" ? "辨析" : "考纲"));
+
+  var i = 0, shown = false, stat = { again: 0, fuzzy: 0, known: 0 };
+
+  function draw() {
+    if (i >= queue.length) return finish();
+    var it = queue[i];
+    prog.style.width = Math.round(i / queue.length * 100) + "%";
+    stage.innerHTML =
+      '<div class="card">' +
+        '<span class="tag">' + it.kind + '</span><span class="tag st">' + "★".repeat(Math.min(3, it.star || 1)) + '</span>' +
+        '<span class="tag">' + (i + 1) + ' / ' + queue.length + '</span>' +
+        '<h2>' + esc(it.title) + '</h2>' +
+        '<div class="hint">先自己说一遍，再点「显示答案」</div>' +
+        '<div class="answer" id="ans">' + it.body + '</div>' +
+      '</div>';
+    shown = false;
+    showBtn.style.display = ""; gA.style.display = gF.style.display = gK.style.display = "none";
+    btns.style.display = "";
+  }
+
+  function reveal() {
+    if (shown) return;
+    shown = true;
+    document.getElementById("ans").classList.add("on");
+    showBtn.style.display = "none";
+    gA.style.display = gF.style.display = gK.style.display = "";
+  }
+
+  function next(g) {
+    if (g) {
+      grade(queue[i].xid, g);
+      stat[g]++;
+      if (g === "again") queue.push(queue[i]);   // 忘记：本轮末尾再来一次
+    }
+    i++;
+    draw();
+  }
+
+  function finish() {
+    prog.style.width = "100%";
+    btns.style.display = "none";
+    var due = 0;
+    items.forEach(function (x) { if (isDue(rec(x.xid))) due++; });
+    stage.innerHTML = '<div class="end"><h2>这一轮结束了</h2>' +
+      '<div class="stat"><div><b>' + stat.known + '</b><span>熟悉</span></div>' +
+      '<div><b>' + stat.fuzzy + '</b><span>模糊</span></div>' +
+      '<div><b>' + stat.again + '</b><span>忘记</span></div></div>' +
+      '<p class="hint">下次到期还有 <b>' + due + '</b> 条</p>' +
+      '<a href="concepts.html">回辨析卡</a><button id="again2">再来一轮</button>' +
+      '<p class="hint" style="margin-top:16px">忘记的那些已经排到今天，晚点再点一次「再来一轮」就能清掉。</p></div>';
+    document.getElementById("again2").onclick = function () { location.reload(); };
+  }
+
+  showBtn.onclick = reveal;
+  gA.onclick = function () { next("again"); };
+  gF.onclick = function () { next("fuzzy"); };
+  gK.onclick = function () { next("known"); };
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === " " || e.key === "Enter") { e.preventDefault(); shown ? null : reveal(); }
+    if (!shown) return;
+    if (e.key === "1") next("again");
+    if (e.key === "2") next("fuzzy");
+    if (e.key === "3") next("known");
+  });
+
+  if (!queue.length) {
+    stage.innerHTML = '<div class="empty">今天没有到期的卡片 🎉<br><br><a href="concepts.html">回辨析卡</a></div>';
+    btns.style.display = "none";
+  } else draw();
+})();
+</script>
+</body>
+</html>
