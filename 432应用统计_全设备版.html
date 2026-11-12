@@ -841,12 +841,13 @@ body.xhide-undone [data-xid].is-untouched{display:none}
 
   /* ---------------- 高亮 ---------------- */
   function applyHL(root, list) {
-    if (!list || !list.length) return;
     // 先清掉旧的 mark（重新渲染后一般没有，但保险）
     Array.prototype.forEach.call(root.querySelectorAll("mark.xhl"), function (m) {
       var t = document.createTextNode(m.textContent);
       m.parentNode.replaceChild(t, m);
     });
+    if (root.normalize) root.normalize();
+    if (!list || !list.length) return;
     var sorted = list.slice().sort(function (a, b) { return b.s - a.s; });
     sorted.forEach(function (r) {
       var nodes = collectTextNodes(root);
@@ -960,6 +961,21 @@ body.xhide-undone [data-xid].is-untouched{display:none}
       bar.style.top = Math.max(8, r.top - 42) + "px";
     }, 10);
   });
+  document.addEventListener("touchend", function (e) {
+    if (e.target.closest && e.target.closest("#xhlbar")) return;
+    setTimeout(function () {
+      var sel = currentSelection();
+      if (!sel) { hideBar(); return; }
+      var rects = window.getSelection().getRangeAt(0).getClientRects();
+      var r = rects.length ? rects[rects.length - 1] : window.getSelection().getRangeAt(0).getBoundingClientRect();
+      pendingSel = sel;
+      var bar = ensureBar();
+      bar.style.display = "flex";
+      var w = bar.offsetWidth || 150;
+      bar.style.left = Math.min(window.innerWidth - w - 8, Math.max(8, r.left + r.width / 2 - w / 2)) + "px";
+      bar.style.top = Math.max(8, r.top - 52) + "px";
+    }, 320);
+  }, { passive: true });
   document.addEventListener("scroll", function () { hideBar(); }, true);
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") hideBar(); });
 
@@ -1086,14 +1102,19 @@ body.xhide-undone [data-xid].is-untouched{display:none}
     var items = document.querySelectorAll("[data-xid]");
     Array.prototype.forEach.call(items, function (el) {
       var xid = el.getAttribute("data-xid");
-      if (el.getAttribute("data-xdone") === "1") {
-        // 只同步状态类，不完全重建
+      var sig = JSON.stringify(HL[xid] || []);
+      var done = el.getAttribute("data-xdone") === "1"
+        && el.getAttribute("data-xsig") === sig
+        && el.querySelector(".xbar");
+      // 高亮记录非空时必须确实存在 mark，否则说明被重渲染抹掉了 → 重画
+      if (done && (!sig || sig === "[]" || el.querySelector("mark.xhl"))) {
         var r = rec(xid);
         el.classList.toggle("is-m2", r.m === 2);
         el.classList.toggle("is-untouched", !r.n && !r.m);
         return;
       }
       el.setAttribute("data-xdone", "1");
+      el.setAttribute("data-xsig", sig);
       renderItem(el, xid);
     });
     updateSum();
