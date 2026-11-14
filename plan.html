@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>34 天冲刺日程 · 432 考研</title>
+<style>
+:root{--bg:#f6f7f5;--card:#fff;--ink:#1d2321;--ink2:#59635e;--line:#e2e6e2;--acc:#1f6f52}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;-webkit-text-size-adjust:100%}
+header{position:sticky;top:0;z-index:9;background:rgba(246,247,245,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:10px 14px 8px}
+h1{margin:0;font-size:17px}
+.sub{color:var(--ink2);font-size:12.5px;margin-top:2px}
+.pbar{height:5px;background:#e8ebe7;border-radius:99px;margin:8px 0 6px;overflow:hidden}
+.pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2f8e69,#1f6f52);transition:width .25s}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px}
+.chips button{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--ink2);font-size:12.5px;padding:5px 11px;border-radius:99px}
+.chips button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+main{padding:10px 12px 40px;max-width:720px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px 12px;margin:0 0 10px}
+.hd{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dt{font-size:15px}
+.tag{font-size:11px;padding:1px 6px;border-radius:6px}
+.tA{background:#fdf1e6;color:#a86b12} .tB{background:#eaf1fb;color:#2a5ea8}
+.tC{background:#eef4f0;color:var(--acc)} .tD{background:#f5eeee;color:#b3261e}
+.left{margin-left:auto;color:var(--ink2);font-size:11.5px}
+.th{color:var(--acc);font-size:13px;margin:5px 0 7px}
+.it{display:flex;gap:7px;align-items:flex-start;padding:5px 0;border-top:1px dashed #eef0ee;min-width:0}
+.it input{appearance:none;width:17px;height:17px;border:1.5px solid #c7cfc9;border-radius:5px;margin:2px 0 0;flex:0 0 auto}
+.it input:checked{background:var(--acc);border-color:var(--acc);box-shadow:inset 0 0 0 3px #fff}
+.lb{flex:0 0 auto;font-size:11px;padding:1px 5px;border-radius:5px;background:#f0f2f0;color:var(--ink2);margin-top:1px}
+.lb数{background:#eef1fb;color:#2a4f9c} .lb专{background:#eef4f0;color:var(--acc)}
+.lb英{background:#fdf3ec;color:#a3562a} .lb政{background:#f7eef2;color:#8f3f66}
+.tx{font-size:13.5px;color:#242b28;min-width:0;flex:1 1 auto;overflow-wrap:anywhere;word-break:break-word}
+.it.done .tx{color:#9aa39d;text-decoration:line-through}
+.chk{display:flex;gap:10px;flex-wrap:wrap;margin-top:7px;padding-top:7px;border-top:1px solid #f1f3f1;color:var(--ink2);font-size:11.5px}
+.chk span::before{content:"☐ ";color:#b9c2bb}
+details{margin:4px 0 14px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+summary{font-size:13.5px;color:var(--acc);cursor:pointer}
+table{width:100%;border-collapse:collapse;margin-top:8px;font-size:12.5px}
+td,th{border-top:1px solid var(--line);padding:6px 4px;vertical-align:top}
+th{text-align:left;color:var(--ink2);font-weight:500}
+a.pdf{display:block;text-align:center;margin:16px 0 6px;padding:12px;border-radius:12px;background:var(--acc);color:#fff;text-decoration:none;font-size:14px}
+.foot{color:#9aa39d;font-size:11.5px;text-align:center;margin-top:10px}
+body.only-todo .card.todo-done{display:none}
+</style></head><body>
+<header>
+  <h1>34 天冲刺 · 2026-11-15 → 12-18</h1>
+  <div class="sub">初试 12-19/20 · 34 天 · 每天 10h · 数 4 / 432 3.5 / 英 1.5 / 政 1</div>
+  <div class="pbar"><i id="pb"></i></div>
+  <div class="sub" id="stat">已完成 0 / 34 天</div>
+  <div class="chips">
+    <button class="on" data-f="all">全部</button>
+    <button data-f="todo">只看没做完</button>
+    <button data-f="A">A 补漏</button><button data-f="B">B 成卷</button>
+    <button data-f="C">C 冲刺</button><button data-f="D">D 收口</button>
+  </div>
+</header>
+<main>
+<section class="card" data-stage="A" id="d0">
+  <div class="hd"><b class="dt">11-15 周日</b><span class="tag tA">A 补漏</span>
+  <span class="left">D01 · 距初试 34 天</span></div>
+  <div class="th">考场节奏：432 全真</div>
+  <div class="it"><input type="checkbox" data-k="d0-0"><span class="lb lb数">数</span><span class="tx">09:00–11:00 数学错题本：本周套卷错题重做（只做错题）+ 公式速览 30′</span></div><div class="it"><input type="checkbox" data-k="d0-1"><span class="lb lb专">专</span><span class="tx">14:00–17:00 432 全真：第一套（180′，含涂卡）｜晚间 40′ 三色订正</span></div><div class="it"><input type="checkbox" data-k="d0-2"><span class="lb lb英">英</span><span class="tx">阅读 2 篇（2015 T4、2016 T1）+ 完型 1 篇 + 生词 25′</span></div><div class="it"><input type="checkbox" data-k="d0-3"><span class="lb lb政">政</span><span class="tx">下午前 30′ 复习昨日一页纸；晚间 60′ 政治整卷选择题 1 套 + 错题标注</span></div>
+  <div class="chk"><span>432 全真 ≥110</span><span>阅读错 ≤3</span><span>政治选择 ≥32</span></div>
+</section>
+<section class="card" data-stage="A" id="d1">
+  <div class="hd"><b class="dt">11-16 周一</b><span class="tag tA">A 补漏</span>
+  <span class="left">D02 · 距初试 33 天</span></div>
+  <div class="th">线代D1 + 概率专题：一维随机变量与分布</div>
+  <div class="it"><input type="checkbox" data-k="d1-0"><span class="lb lb数">数</span><span class="tx">数学① 2h50：一维随机变量与分布 —— 数据大盘看考频 10′ → 章节练 15 题 → 阶梯练 10 题，错题当场登记｜数学② 2h：线代卡点 D1（60′）三阶行列式三系数自检 + 行列式 40 题（臻选题 #001–#040）｜昨日错题回炉 30′ + 公式速览 10′</span></div><div class="it"><input type="checkbox" data-k="d1-1"><span class="lb lb专">专</span><span class="tx">432 3.5h：计算题 1 道（全概率与贝叶斯）先写后对照 50′ → ★★★ A 组快刷 40′ → 到期队列 20′ → 错题重做 40′ → 手册 30′</span></div><div class="it"><input type="checkbox" data-k="d1-2"><span class="lb lb英">英</span><span class="tx">阅读 1 篇（2016 T2）精读 50′：做题 → 逐句翻译 → 生词 8 个入本｜翻译 1 句（2015 第46题）20′｜生词 25′</span></div><div class="it"><input type="checkbox" data-k="d1-3"><span class="lb lb政">政</span><span class="tx">政治 1h：一页纸 001–003（3 页，先读后默关键词）40′ + 1000 题对应章节 20′</span></div>
+  <div class="chk"><span>错题 ≥3 条</span><span>计算题写完 3 步</span><span>生词 8 个</span></div>
+</section>
+<section class="card" data-stage="A" id="d2">
+  <div class="hd"><b class="dt">11-17 周二</b><span class="tag tA">A 补漏</span>
+  <span class="left">D03 · 距初试 32 天</span></div>
+  <div class="th">数学套卷：2016 真题</div>
+  <div class="it"><input type="checkbox" data-k="d2-0"><span class="lb lb数">数</span><span class="tx">数学① 3h：2016 真题 限时 150′（09:10–11:40）｜数学② 2h：三色订正 60′ + 线代卡点 D2（60′）秩与方程组判定（臻选题 #079–#082 + #033–#036）</span></div><div class="it"><input type="checkbox" data-k="d2-1"><span class="lb lb专">专</span><span class="tx">432 3.5h：A 组（概率 0 / 互斥 / 独立） 默写 40′（盖住答案）→ ★★ 一组 30′ → 计算题 1 道（二维连续型四连问）手写完整 40′ → 到期队列 20′ → 手册对照 30′ → 五表 20′</span></div><div class="it"><input type="checkbox" data-k="d2-2"><span class="lb lb英">英</span><span class="tx">小作文 1 篇限时 30′（建议信（图书馆 / 食堂））→ 对照合并版附录 B 改 30′｜阅读 1 篇（2016 T3）40′｜生词 25′</span></div><div class="it"><input type="checkbox" data-k="d2-3"><span class="lb lb政">政</span><span class="tx">政治 1h：一页纸 004–006（3 页，先读后默关键词）40′ + 1000 题对应章节 20′</span></div>
+  <div class="chk"><span>套卷 ≥100</span><span>计算题写完 3 步</span><span>生词 8 个</span></div>
+</section>
+<section class="card" data-stage="A" id="d3">
+  <div class="hd"><b class="dt">11-18 周三</b><span class="tag tA">A 补漏</span>
+  <span class="left">D04 · 距初试 31 天</span></div>
+  <div class="th">线代D3 + 概率专题：多维随机变量与独立性</div>
+  <div class="it"><input type="checkbox" data-k="d3-0"><span class="lb lb数">数</span><span class="tx">数学① 2h50：多维随机变量与独立性 —— 数据大盘看考频 10′ → 章节练 15 题 → 阶梯练 10 题，错题当场登记｜数学② 2h：线代卡点 D3（60′）抽象秩推理：AB=O / AB=C（臻选题 #052–#056）｜昨日错题回炉 30′ + 公式速览 10′</span></div><div class="it"><input type="checkbox" data-k="d3-1"><span class="lb lb专">专</span><span class="tx">432 3.5h：计算题 1 道（和的分布 / 函数分布）先写后对照 50′ → ★★★ C 组快刷 40′ → 到期队列 20′ → 错题重做 40′ → 手册 30′</span></div><div class="it"><input type="checkbox" data-k="d3-2"><span class="lb lb英">英</span><span class="tx">阅读 1 篇（2016 T4）50′｜新题型 1 篇 25′｜翻译 1 句（2015 第47题）20′｜生词 25′</span></div><div class="it"><input type="checkbox" data-k="d3-3"><span class="lb lb政">政</span><span class="tx">政治 1h：一页纸 007–009（3 页，先读后默关键词）40′ + 1000 题对应章节 20′</span></div>
+  <div class="chk"><span>错题 ≥3 条</span><span>计算题写完 3 步</span><span>生词 8 个</span></div>
+</section>
+<section class="card" data-stage="A" id="d4">
+  <div class="hd"><b class="dt">11-19 周四</b><span class="tag tA">A 补漏</span>
+  <span class="left">D05 · 距初试 30 天</span></div>
+  <div class="th">数学套卷：2017 真题</div>
+  <div class="it"><input type="checkbox" data-k="d4-0"><span class="lb lb数">数</span><span class="tx">数学① 3h：2017 真题 限时 150′（09:10–11:40）｜数学② 2h：三色订正 60′ + 线代卡点 D4（60′）秩 1 矩阵与高次幂（臻选题 #038 + 讲义 3.2 秩为 1 专题）</span></div><div class="it"><input type="checkbox" data-k="d4-1"><span class="lb lb专">专</span><span class="tx">432 3.5h：B 组（分布函数 / 密度） 默写 40′（盖住答案）→ ★★ 一组 30′ → 计算题 1 道（数字特征与协方差）手写完整 40′ → 到期队列 20′ → 手册对照 30′ → 五表 20′</span></div><div class="it"><input type="checkbox" data-k="d4-2"><span class="lb lb英">英</span><span class="tx">大作文 1 篇限时 40′（AI 与学习（工具 vs 代写））→ 用 §3 三轴查重复 20′｜阅读 1 篇（2017 T1）30′</span></div><div class="it"><input type="checkbox" data-k="d4-3"><span class="lb lb政">政</span><span class="tx">政治 1h：一页纸 010–012（3 页，先读后默关键词）40′ + 1000 题对应章节 20′</span></div>
+  <div class="chk"><span>套卷 ≥100</span><span>计算题写完 3 步</span><span>生词 8 个</span></div>
+</section>
+<section class="card" data-stage="A" id="d5">
+  <div class="hd"><b class="dt">11-20 周五</b><span class="tag tA">A 补漏</span>
+  <span class="left">D06 · 距初试 29 天</span></div>
+  <div class="th">线代D5 + 概率专题：数字特征与协方差</div>
+  <div class="it"><input type="checkbox" data-k="d5-0"><span class="lb lb数">数</span><span class="tx">数学① 2h50：数字特征与协方差 —— 数据大盘看考频 10′ → 章节练 15 题 → 阶梯练 10 题，错题当场登记｜数学② 2h：线代卡点 D5（60′）相似对角化与反求 A（臻选题 #132–#141）｜昨日错题回炉 30′ + 公式速览 10′</span></div><div class="it"><input type="checkbox" data-k="d5-1"><span class="lb lb专">专</span><span class="tx">432 3.5h：计算题 1 道（χ²·t·F 构造）先写后对照 50′ → ★★★ E 组快刷 40′ → 到期队列 20′ → 错题重做 40′ → 手册 30′</span></div><div class="it"><input type="checkbox" data-k="d5-2"><span class="lb lb英">英</span><span class="tx">阅读 1 篇（2017 T2）50′｜完型 1 篇 25′｜翻译 1 句（2015 第48题）20′｜生词 25′</span></div><div class="it"><input type="checkbox" data-k="d5-3"><span class="lb lb政">政</span><span class="tx">政治 1h：一页纸 013–015（3 页，先读后默关键词）40′ + 1000 题对应章节 20′</span></div>
+  
+</section>
+<section class="card" data-stage="A" id="d6">
+  <div class="hd"><b class="dt">11-21 周六</b><span class="tag tA">A 补漏</span>
+  <span class="left">D07 · 距初试 28 天</span></div>
+  <div class="th">双模考：数学 + 英语</div>
+  <div class="it"><input type="checkbox" data-k="d6-0"><span class="lb lb数">数</span><span class="tx">08:30–11:30 数学全真：2018 真题（150′，不查书）｜12:20–13:50 三色订正 + 丢分归因 A–E</span></div><div class="it"><input type="checkbox" data-k="d6-1"><span class="lb lb专">专</span><span class="tx">19:00–21:30 432：C 组（期望方差 / 协方差） 快刷 40′ + 到期队列 20′ + 计算 1 道（矩估计）40′ + 手册 30′</span></div><div class="it"><input type="checkbox" data-k="d6-2"><span class="lb lb英">英</span><span class="tx">14:00–17:00 英语整卷：同套真题（作文写满）｜17:00–17:40 对答案、算分</span></div><div class="it"><input type="checkbox" data-k="d6-3"><span class="lb lb政">政</span><span class="tx">21:30–22:30 政治：一页纸 016–019（4 页）+ 1000 题 20′</span></div>
+  <div class="chk"><span>数学套卷 ≥100</span><span>英语作文写完</span><span>432 计算 3 步</span></div>
+</section>
+<section class="card" data-stage="A" id="d7">
+  <div class="hd"><b class="dt">11-22 周日</b><span class="tag tA">A 补漏</span>
+  <span class="left">D08 · 距初试 27 天</span></div>
+  <div class="th">考场节奏：432 全真</div>
+  <div class="it"><input type="checkbox" data-k="d7-0"><span class="lb lb数">数</span><span class="tx">09:00–11:00 数学错题本：本周套卷错题重做（只做错题）+ 公式速览 30′</span></div><div class="it"><input type="checkbox" data-k="d7-1"><span class="lb lb专">专</span><span class="tx">14:00–17:00 432 全真：第二套（180′，含涂卡）｜晚间 40′ 三色订正</span></div><div class="it"><input type="checkbox" data-k="d7-2"><span class="lb lb英">英</span><span class="tx">阅读 2 篇（2017 T3、2017 T4）+ 完型 1 篇 + 生词 25′</span></div><div class="it"><input type="checkbox" data-k="d7-3"><span class="lb lb政">政</span><span class="tx">下午前 30′ 复习昨日一页纸；晚间 60′ 政治整卷选择题 1 套 + 错题标注</span></div>
+  <div class="chk"><span>432 全真 ≥110</span><span>阅读错 ≤3</span><span>政治选择 ≥32</span></div>
+</section>
+<section class="card" data-stage="B" id="d8">
+  <div class="hd"><b class="dt">11-23 周一</b><span class="tag tB">B 成卷</span>
+  <span class="left">D09 · 距初试 26 天</span></div>
+  <div class="th">线代D6 + 概率专题：大数定律与中心极限</div>
+  <div class="it"><input type="checkbox" data-k="d8-0"><span class="lb lb数">数</span><span class="tx">数学① 2h50：大数定律与中心极限 —— 数据大盘看考频 10′ → 章节练 15 题 → 阶梯练 10 题，错题当场登记｜数学② 2h：线代卡点 D6（60′）实对称 + 正交变换（臻选题 #144 起 + 二次型前 30 题）｜昨日错题回炉 30′ + 公式速览 10′</span></div><div class="it"><input type="checkbox" data-k="d8-1"><span class="lb lb专">专</span><span class="tx">432 3.5h：计算题 1 道（极大似然）先写后对照 50′ → ★★★ A 组快刷 40′ → 到期队列 20′ → 错题重做 40′ → 手册 30′</span></div><div class="it"><input type="checkbox" data-k="d8-2"><span class="lb lb英">英</span><span class="tx">阅读 1 篇（2018 T1）精读 50′：做题 → 逐句翻译 → 生词 8 个入本｜翻译 1 句（2015 第49题）20′｜生词 25′</span></div><div class="it"><input type="checkbox" data-k="d8-3"><span class="lb lb政">政</span><span class="tx">政治 1h：一页纸 020–022（3 页，先读后默关键词）40′ + 1000 题对应章节 20′</span></div>
+  <div class="chk"><span>错题 ≥3 条</span><span>计算题写完 3 步</span><span>生词 8 个</span></div>
+</section>
+<section class="card" data-stage="B" id="d9">
+  <div class="hd"><b class="dt">11-24 周二</b><span class="tag tB">B 成卷</span>
+  <span class="left">D10 · 距初试 25 天</span></div>
+  <div class="th">数学套卷：2019 真题</div>
+  <div class="it"><input type="checkbox" data-k="d9-0"><span class="lb lb数">数</span><span class="tx">数学① 3h：2019 真题 限时 150′（09:10–11:40）｜数学② 2h：三色订正 60′ + 线代卡点 D7（60′）二次型后半 + 正定四判据（臻选题 #041–#071）</span></div><div class="it"><input type="checkbox" data-k="d9-1"><span class="lb lb专">专</span><span class="tx">432 3.5h：D 组（大数定律 / 中心极限 / 收敛） 默写 40′（盖住答案）→ ★★ 一组 30′ → 计算题 1 道（区间估计与样本量）手写完整 40′ → 到期队列 20′ → 手册对照 30′ → 五表 20′</span></div><div class="it"><input type="checkbox" data-k="d9-2"><span class="lb lb英">英</span><span class="tx">小作文 1 篇限时 30′（推荐信（书 / 电影 / 地点））→ 对照合并版附录 B 改 30′｜阅读 1 篇（2018 T2）40′｜生词 25′</span></div><div class="it"><input type="checkbox" data-k="d9-3"><span class="lb lb政">政</span><span class="tx">政治 1h：一页纸 023–025（3 页，先读后默关键词）40′ + 1000 题对应章节 20′</span></div>
+  <div class="chk"><span>套卷 ≥100</span><span>计算题写完 3 步</span><span>生词 8 个</span></div>
+</section>
+<section class="card" data-stage="B" id="d10">
+  <div class="hd"><b class="dt">11-25 周三</b><span class="tag tB">B 成卷</span>
+  <span class="left">D11 · 距初试 24 天</span></div>
+  <div class="th">线代D8 + 概率专题：统计量与抽样分布</div>
+  <div class="it"><input type="checkbox" data-k="d10-0"><span class="lb lb数">数</span><span class="tx">数学① 2h50：统计量与抽样分布 —— 数据大盘看考频 10′ → 章节练 15 题 → 阶梯练 10 题，错题当场登记｜数学② 2h：线代卡点 D8（60′）综合：真题线代 4 题限时 30′ + 错题重做｜昨日错题回炉 30′ + 公式速览 10′</span></div><div class="it"><input type="checkbox" data-k="d10-1"><span class="lb lb专">专</span><span class="tx">432 3.5h：计算题 1 道（单样本假设检验）先写后对照 50′ → ★★★ C 组快刷 40′ → 到期队列 20′ → 错题重做 40′ → 手册 30′</span></div><div class="it"><input type="checkbox" data-k="d10-2"><span class="lb lb英">英</span><span class="tx">阅读 1 篇（2018 T3）50′｜新题型 1 篇 25′｜翻译 1 句（2015 第50题）20′｜生词 25′</span></div><div class="it"><input type="checkbox" data-k="d10-3"><span class="lb lb政">政</span><span class="tx">政治 1h：一页纸 026–028（3 页，先读后默关键词）40′ + 1000 题对应章节 20′</span></div>
+  <div class="chk"><span>错题 ≥3 条</span><span>计算题写完 3 步</span><span>生词 8 个</span></div>
+</section>
+<section class="card" data-stage="B" id="d11">
+  <div class="hd"><b class="dt">11-26 周四</b><span class="tag tB">B 成卷</span>
+  <span class="left">D12 · 距初试 23 天</span></div>
+  <div class="th">数学套卷：2020 真题</div>
+  <div class="it"><input type="checkbox" data-k="d11-0"><span class="lb lb数">数</span><span class="tx">数学① 3h：2020 真题 限时 150′（09:10–11:40）｜数学② 1h：三色订正 + 按 A 读题 / E 计算 分类登记</span></div><div class="it"><input type="checkbox" data-k="d11-1"><span class="lb lb专">专</span><span class="tx">432 3.5h：E 组（统计量 / 抽样分布 / 三大分布） 默写 40′（盖住答案）→ ★★ 一组 30′ → 计算题 1 道（双样本检验与置信区间）手写完整 40′ → 到期队列 20′ → 手册对照 30′ → 五表 20′</span></div><div class="it"><input type="checkbox" data-k="d11-2"><span class="lb lb英">英</span><span class="tx">大作文 1 篇限时 40′（养老机器人（图表 + 态度））→ 用 §3 三轴查重复 20′｜阅读 1 篇（2018 T4）30′</span></div><div class="it"><input type="checkbox" data-k="d11-3"><span class="lb lb政">政</span><span class="tx">政治 1h：一页纸 029–031（3 页，先读后默关键词）40′ + 1000 题对应章节 20′</span></div>
+  
+</section>
+<section class="card" data-stage="B" id="d12">
+  <div class="hd"><b class="dt">11-27 周五</b><span class="tag tB">B 成卷</span>
+  <span class="left">D13 · 距初试 22 天</span></div>
+  <div class="th">概率专题：矩估计与极大似然</div>
+  <div class="it"><input type="checkbox" data-k="d12-0"><span class="lb lb数">数</span><span class="tx">数学① 2h50：矩估计与极大似然 —— 数据大盘看考频 10′ → 章节练 15 题 → 阶梯练 10 题，错题当场登记｜数学② 1h50：昨日错题回炉 12 题 + 公式速览 20′</span></div><div class="it"><input type="checkbox" data-k="d12-1"><span class="lb lb专">专</span><span class="tx">432 3.5h：计算题 1 道（拟合优度与列联表）先写后对照 50′ → ★★★ E 组快刷 40′ → 到期队列 20′ → 错题重做 40′ → 手册 30′</span></div><div class="it"><input type="checkbox" data-k="d12-2"><span class="lb lb英">英</span><span class="tx">阅读 1 篇（2019 T1）50′｜完型 1 篇 25′｜翻译 1 句（2016 第46题）20′｜生词 25′</span></div><div class="it"><input type="checkbox" data-k="d12-3"><span class="lb lb政">政</span><span class="tx">政治 1h：一页纸 032–034（3 页，先读后默关键词）40′ + 1000 题对应章节 20′</span></div>
+  <div class="chk"><span>错题 ≥3 条</span><span>计算题写完 3 步</span><span>生词 8 个</span></div>
+</section>
+<section class="card" data-stage="B" id="d13">
+  <div class="hd"><b class="dt">11-28 周六</b><span class="tag tB">B 成卷</span>
+  <span class="left">D14 · 距初试 21 天</span></div>
+  <div class="th">双模考：数学 + 英语</div>
+  <div class="it"><input type="checkbox" data-k="d13-0"><span class="lb lb数">数</span><span class="tx">08:30–11:30 数学全真：2021 真题（150′，不查书）｜12:20–13:50 三色订正 + 丢分归因 A–E</span></div><div class="it"><input type="checkbox" data-k="d13-1"><span class="lb lb专">专</span><span class="tx">19:00–21:30 432：F 组（估计量性质 / UMVUE / 有效） 快刷 40′ + 到期队列 20′ + 计算 1 道（次序统计量与相合性）40′ + 手册 30′</span></div><div class="it"><input type="checkbox" data-k="d13-2"><span class="lb lb英">英</span><span class="tx">14:00–17:00 英语整卷：同套真题（作文写满）｜17:00–17:40 对答案、算分</span></div><div class="it"><input type="checkbox" data-k="d13-3"><span class="lb lb政">政</span><span class="tx">21:30–22:30 政治：一页纸 035–038（4 页）+ 1000 题 20′</span></div>
+  <div class="chk"><span>数学套卷 ≥100</span><span>英语作文写完</span><span>432 计算 3 步</span></div>
+</section>
+<section class="card" data-stage="B" id="d14">
+  <div class="hd"><b class="dt">11-29 周日</b><span class="tag tB">B 成卷</span>
+  <span class="left">D15 · 距初试 20 天</span></div>
+  <div class="th">考场节奏：432 全真</div>
+  <div class="it"><input type="checkbox" data-k="d14-0"><span class="lb lb数">数</span><span class="tx">09:00–11:00 数学错题本：本周套卷错题重做（只做错题）+ 公式速览 30′</span></div><div class="it"><input type="checkbox" data-k="d14-1"><span class="lb lb专">专</span><span class="tx">14:00–17:00 432 全真：第三套（180′，含涂卡）｜晚间 40′ 三色订正</span></div><div class="it"><input type="checkbox" data-k="d14-2"><span class="lb lb英">英</span><span class="tx">阅读 2 篇（2019 T2、2019 T3）+ 完型 1 篇 + 生词 25′</span></div><div class="it"><input type="checkbox" data-k="d14-3"><span class="lb lb政">政</span><span class="tx">下午前 30′ 复习昨日一页纸；晚间 60′ 政治整卷选择题 1 套 + 错题标注</span></div>
+  <div class="chk"><span>432 全真 ≥110</span><span>阅读错 ≤3</span><span>政治选择 ≥32</span></div>
+</section>
+<section class="card" data-stage="B" id="d15">
+  <div class="hd"><b class="dt">11-30 周一</b><span class="tag tB">B 成卷</span>
+  <span class="left">D16 · 距初试 19 天</span></div>
+  <div class="th">概率专题：区间估计与样本量</div>
+  <div class="it"><input type="checkbox" data-k="d15-0"><span class="lb lb数">数</span><span class="tx">数学① 2h50：区间估计与样本量 —— 数据大盘看考频 10′ → 章节练 15 题 → 阶梯练 10 题，错题当场登记｜数学② 1h50：昨日错题回炉 12 题 + 公式速览 20′</span></div><div class="it"><input type="checkbox" data-k="d15-1"><span class="lb lb专">专</span><span class="tx">432 3.5h：计算题 1 道（全概率与贝叶斯）先写后对照 50′ → ★★★ A 组快刷 40′ → 到期队列 20′ → 错题重做 40′ → 手册 30′</span></div><div class="it"><input type="checkbox" data-k="d15-2"><span class="lb lb英">英</span><span class="tx">阅读 1 篇（2019 T4）精读 50′：做题 → 逐句翻译 → 生词 8 个入本｜翻译 1 句（2016 第47题）20′｜生词 25′</span></div><div class="it"><input type="checkbox" data-k="d15-3"><span class="lb lb政">政</span><span class="tx">政治 1h：一页纸 039–041（3 页）30′ + 主观题 1 题抄材料（34 题 马原（辩证法 / 认识论））20′ + 1000 题 10′</span></div>
+  <div class="chk"><span>错题 ≥3 条</span><span>计算题写完 3 步</span><span>生词 8 个</span></div>
+</section>
+<section class="card" data-stage="B" id="d16">
+  <div class="hd"><b class="dt">12-01 周二</b><span class="tag tB">B 成卷</span>
+  <span class="left">D17 · 距初试 18 天</span></div>
+  <div class="th">数学套卷：2022 真题</div>
+  <div class="it"><input type="checkbox" data-k="d16-0"><span class="lb lb数">数</span><span class="tx">数学① 3h：2022 真题 限时 150′（09:10–11:40）｜数学② 1h：三色订正 + 按 A 读题 / E 计算 分类登记</span></div><div class="it"><input type="checkbox" data-k="d16-1"><span class="lb lb专">专</span><span class="tx">432 3.5h：A 组（概率 0 / 互斥 / 独立） 默写 40′（盖住答案）→ ★★ 一组 30′ → 计算题 1 道（二维连续型四连问）手写完整 40′ → 到期队列 20′ → 手册对照 30′ → 五表 20′</span></div><div class="it"><input type="checkbox" data-k="d16-2"><span class="lb lb英">英</span><span class="tx">小作文 1 篇限时 30′（通知（比赛 / 讲座））→ 对照合并版附录 B 改 30′｜阅读 1 篇（2020 T1）40′｜生词 25′</span></div><div class="it"><input type="checkbox" data-k="d16-3"><span class="lb lb政">政</span><span class="tx">政治 1h：一页纸 042–044（3 页）30′ + 主观题 1 题抄材料（35 题 新思想（高质量发展））20′ + 1000 题 10′</span></div>
+  <div class="chk"><span>套卷 ≥100</span><span>计算题写完 3 步</span><span>生词 8 个</span></div>
+</section>
+<section class="card" data-stage="B" id="d17">
+  <div class="hd"><b class="dt">12-02 周三</b><span class="tag tB">B 成卷</span>
+  <span class="left">D18 · 距初试 17 天</span></div>
+  <div class="th">概率专题：假设检验与两类错误</div>
+  <div class="it"><input type="checkbox" data-k="d17-0"><span class="lb lb数">数</span><span class="tx">数学① 2h50：假设检验与两类错误 —— 数据大盘看考频 10′ → 章节练 15 题 → 阶梯练 10 题，错题当场登记｜数学② 1h50：昨日错题回炉 12 题 + 公式速览 20′</span></div><div class="it"><input type="checkbox" data-k="d17-1"><span class="lb lb专">专</span><span class="tx">432 3.5h：计算题 1 道（和的分布 / 函数分布）先写后对照 50′ → ★★★ C 组快刷 40′ → 到期队列 20′ → 错题重做 40′ → 手册 30′</span></div><div class="it"><input type="checkbox" data-k="d17-2"><span class="lb lb英">英</span><span class="tx">阅读 1 篇（2020 T2）50′｜新题型 1 篇 25′｜翻译 1 句（2016 第48题）20′｜生词 25′</span></div><div class="it"><input type="checkbox" data-k="d17-3"><span class="lb lb政">政</span><span class="tx">政治 1h：一页纸 045–047（3 页）30′ + 主观题 1 题抄材料（36 题 史纲（党史主线））20′ + 1000 题 10′</span></div>
+  
+</section>
+<section class="card" data-stage="B" id="d18">
+  <div class="hd"><b class="dt">12-03 周四</b><span class="tag tB">B 成卷</span>
+  <span class="left">D19 · 距初试 16 天</span></div>
+  <div class="th">数学套卷：模拟卷一</div>
+  <div class="it"><input type="checkbox" data-k="d18-0"><span class="lb lb数">数</span><span class="tx">数学① 3h：模拟卷一 限时 150′（09:10–11:40）｜数学② 1h：三色订正 + 按 A 读题 / E 计算 分类登记</span></div><div class="it"><input type="checkbox" data-k="d18-1"><span class="lb lb专">专</span><span class="tx">432 3.5h：B 组（分布函数 / 密度） 默写 40′（盖住答案）→ ★★ 一组 30′ → 计算题 1 道（数字特征与协方差）手写完整 40′ → 到期队列 20′ → 手册对照 30′ → 五表 20′</span></div><div class="it"><input type="checkbox" data-k="d18-2"><span class="lb lb英">英</span><span class="tx">大作文 1 篇限时 40′（选课进行时（难课 vs 水课））→ 用 §3 三轴查重复 20′｜阅读 1 篇（2020 T3）30′</span></div><div class="it"><input type="checkbox" data-k="d18-3"><span class="lb lb政">政</span><span class="tx">政治 1h：一页纸 048–050（3 页）30′ + 主观题 1 题抄材料（37 题 思修法基（价值 / 法治））20′ + 1000 题 10′</span></div>
+  <div class="chk"><span>套卷 ≥100</span><span>计算题写完 3 步</span><span>生词 8 个</span></div>
+</section>
+<section class="card" data-stage="B" id="d19">
+  <div class="hd"><b class="dt">12-04 周五</b><span class="tag tB">B 成卷</span>
+  <span class="left">D20 · 距初试 15 天</span></div>
+  <div class="th">概率专题：一维随机变量与分布</div>
+  <div class="it"><input type="checkbox" data-k="d19-0"><span class="lb lb数">数</span><span class="tx">数学① 2h50：一维随机变量与分布 —— 数据大盘看考频 10′ → 章节练 15 题 → 阶梯练 10 题，错题当场登记｜数学② 1h50：昨日错题回炉 12 题 + 公式速览 20′</span></div><div class="it"><input type="checkbox" data-k="d19-1"><span class="lb lb专">专</span><span class="tx">432 3.5h：计算题 1 道（χ²·t·F 构造）先写后对照 50′ → ★★★ E 组快刷 40′ → 到期队列 20′ → 错题重做 40′ → 手册 30′</span></div><div class="it"><input type="checkbox" data-k="d19-2"><span class="lb lb英">英</span><span class="tx">阅读 1 篇（2015 T4）50′｜完型 1 篇 25′｜翻译 1 句（2016 第49题）20′｜生词 25′</span></div><div class="it"><input type="checkbox" data-k="d19-3"><span class="lb lb政">政</span><span class="tx">政治 1h：一页纸 051–053（3 页）30′ + 主观题 1 题抄材料（38 题 当代（全球治理））20′ + 1000 题 10′</span></div>
+  <div class="chk"><span>错题 ≥3 条</span><span>计算题写完 3 步</span><span>生词 8 个</span></div>
+</section>
+<section class="card" data-stage="B" id="d20">
+  <div class="hd"><b class="dt">12-05 周六</b><span class="tag tB">B 成卷</span>
+  <span class="left">D21 · 距初试 14 天</span></div>
+  <div class="th">双模考：数学 + 英语</div>
+  <div class="it"><input type="checkbox" data-k="d20-0"><span class="lb lb数">数</span><span class="tx">08:30–11:30 数学全真：模拟卷二（150′，不查书）｜12:20–13:50 三色订正 + 丢分归因 A–E</span></div><div class="it"><input type="checkbox" data-k="d20-1"><span class="lb lb专">专</span><span class="tx">19:00–21:30 432：C 组（期望方差 / 协方差） 快刷 40′ + 到期队列 20′ + 计算 1 道（矩估计）40′ + 手册 30′</span></div><div class="it"><input type="checkbox" data-k="d20-2"><span class="lb lb英">英</span><span class="tx">14:00–17:00 英语整卷：同套真题（作文写满）｜17:00–17:40 对答案、算分</span></div><div class="it"><input type="checkbox" data-k="d20-3"><span class="lb lb政">政</span><span class="tx">21:30–22:30 政治：一页纸 054–057（4 页）+ 1000 题 20′</span></div>
+  <div class="chk"><span>数学套卷 ≥100</span><span>英语作文写完</span><span>432 计算 3 步</span></div>
+</section>
+<section class="card" data-stage="B" id="d21">
+  <div class="hd"><b class="dt">12-06 周日</b><span class="tag tB">B 成卷</span>
+  <span class="left">D22 · 距初试 13 天</span></div>
+  <div class="th">考场节奏：432 全真</div>
+  <div class="it"><input type="checkbox" data-k="d21-0"><span class="lb lb数">数</span><span class="tx">09:00–11:00 数学错题本：本周套卷错题重做（只做错题）+ 公式速览 30′</span></div><div class="it"><input type="checkbox" data-k="d21-1"><span class="lb lb专">专</span><span class="tx">14:00–17:00 432 全真：第四套（180′，含涂卡）｜晚间 40′ 三色订正</span></div><div class="it"><input type="checkbox" data-k="d21-2"><span class="lb lb英">英</span><span class="tx">阅读 2 篇（2016 T1、2016 T2）+ 完型 1 篇 + 生词 25′</span></div><div class="it"><input type="checkbox" data-k="d21-3"><span class="lb lb政">政</span><span class="tx">下午前 30′ 复习昨日一页纸；晚间 60′ 政治整卷选择题 1 套 + 错题标注</span></div>
+  <div class="chk"><span>432 全真 ≥110</span><span>阅读错 ≤3</span><span>政治选择 ≥32</span></div>
+</section>
+<section class="card" data-stage="C" id="d22">
+  <div class="hd"><b class="dt">12-07 周一</b><span class="tag tC">C 冲刺</span>
+  <span class="left">D23 · 距初试 12 天</span></div>
+  <div class="th">概率专题：多维随机变量与独立性</div>
+  <div class="it"><input type="checkbox" data-k="d22-0"><span class="lb lb数">数</span><span class="tx">数学① 2h50：多维随机变量与独立性 —— 数据大盘看考频 10′ → 章节练 15 题 → 阶梯练 10 题，错题当场登记｜数学② 1h50：昨日错题回炉 12 题 + 公式速览 20′</span></div><div class="it"><input type="checkbox" data-k="d22-1"><span class="lb lb专">专</span><span class="tx">432 3.5h：四套卷错题 15 题重做 50′ → ★★★ B 组默写 40′ → 到期队列 20′ → 五张表默写 20′ → 手册错点对照 30′</span></div><div class="it"><input type="checkbox" data-k="d22-2"><span class="lb lb英">英</span><span class="tx">作文 1 篇限时 40′（有书与读书（拥有 vs 阅读））→ 对照改 20′｜阅读 1 篇（2016 T4）30′｜生词 15′</span></div><div class="it"><input type="checkbox" data-k="d22-3"><span class="lb lb政">政</span><span class="tx">政治 1h：一页纸 058–060（3 页）30′ + 主观题 1 题抄材料（34 题 马原（辩证法 / 认识论））20′ + 1000 题 10′</span></div>
+  <div class="chk"><span>错题 ≥3 条</span><span>计算题写完 3 步</span><span>生词 8 个</span></div>
+</section>
+<section class="card" data-stage="C" id="d23">
+  <div class="hd"><b class="dt">12-08 周二</b><span class="tag tC">C 冲刺</span>
+  <span class="left">D24 · 距初试 11 天</span></div>
+  <div class="th">数学套卷：2023 真题</div>
+  <div class="it"><input type="checkbox" data-k="d23-0"><span class="lb lb数">数</span><span class="tx">数学① 3h：2023 真题 限时 150′（09:10–11:40）｜数学② 1h：三色订正 + 按 A 读题 / E 计算 分类登记</span></div><div class="it"><input type="checkbox" data-k="d23-1"><span class="lb lb专">专</span><span class="tx">432 3.5h：四套卷错题 15 题重做 50′ → ★★★ C 组默写 40′ → 到期队列 20′ → 五张表默写 20′ → 手册错点对照 30′</span></div><div class="it"><input type="checkbox" data-k="d23-2"><span class="lb lb英">英</span><span class="tx">小作文 1 篇限时 30′（回复信（问询 / 邀请））→ 对照合并版附录 B 改 30′｜阅读 1 篇（2017 T1）40′｜生词 25′</span></div><div class="it"><input type="checkbox" data-k="d23-3"><span class="lb lb政">政</span><span class="tx">政治 1h：一页纸 061–063（3 页）30′ + 主观题 1 题抄材料（35 题 新思想（高质量发展））20′ + 1000 题 10′</span></div>
+  
+</section>
+<section class="card" data-stage="C" id="d24">
+  <div class="hd"><b class="dt">12-09 周三</b><span class="tag tC">C 冲刺</span>
+  <span class="left">D25 · 距初试 10 天</span></div>
+  <div class="th">概率专题：数字特征与协方差</div>
+  <div class="it"><input type="checkbox" data-k="d24-0"><span class="lb lb数">数</span><span class="tx">数学① 2h50：数字特征与协方差 —— 数据大盘看考频 10′ → 章节练 15 题 → 阶梯练 10 题，错题当场登记｜数学② 1h50：昨日错题回炉 12 题 + 公式速览 20′</span></div><div class="it"><input type="checkbox" data-k="d24-1"><span class="lb lb专">专</span><span class="tx">432 3.5h：四套卷错题 15 题重做 50′ → ★★★ D 组默写 40′ → 到期队列 20′ → 五张表默写 20′ → 手册错点对照 30′</span></div><div class="it"><input type="checkbox" data-k="d24-2"><span class="lb lb英">英</span><span class="tx">作文 1 篇限时 40′（申请信（志愿 / 岗位））→ 对照改 20′｜阅读 1 篇（2017 T3）30′｜生词 15′</span></div><div class="it"><input type="checkbox" data-k="d24-3"><span class="lb lb政">政</span><span class="tx">政治 1h：一页纸 064–066（3 页）30′ + 主观题 1 题抄材料（36 题 史纲（党史主线））20′ + 1000 题 10′</span></div>
+  <div class="chk"><span>错题 ≥3 条</span><span>计算题写完 3 步</span><span>生词 8 个</span></div>
+</section>
+<section class="card" data-stage="C" id="d25">
+  <div class="hd"><b class="dt">12-10 周四</b><span class="tag tC">C 冲刺</span>
+  <span class="left">D26 · 距初试 9 天</span></div>
+  <div class="th">数学套卷：2024 真题</div>
+  <div class="it"><input type="checkbox" data-k="d25-0"><span class="lb lb数">数</span><span class="tx">数学① 3h：2024 真题 限时 150′（09:10–11:40）｜数学② 1h：三色订正 + 按 A 读题 / E 计算 分类登记</span></div><div class="it"><input type="checkbox" data-k="d25-1"><span class="lb lb专">专</span><span class="tx">432 3.5h：四套卷错题 15 题重做 50′ → ★★★ E 组默写 40′ → 到期队列 20′ → 五张表默写 20′ → 手册错点对照 30′</span></div><div class="it"><input type="checkbox" data-k="d25-2"><span class="lb lb英">英</span><span class="tx">大作文 1 篇限时 40′（相携（孝道 / 反哺））→ 用 §3 三轴查重复 20′｜阅读 1 篇（2017 T4）30′</span></div><div class="it"><input type="checkbox" data-k="d25-3"><span class="lb lb政">政</span><span class="tx">政治 1h：肖四选择题 20′ + 主观题背 1 题（37 题 思修法基（价值 / 法治））30′ + 时政 10′</span></div>
+  <div class="chk"><span>套卷 ≥100</span><span>计算题写完 3 步</span><span>生词 8 个</span></div>
+</section>
+<section class="card" data-stage="C" id="d26">
+  <div class="hd"><b class="dt">12-11 周五</b><span class="tag tC">C 冲刺</span>
+  <span class="left">D27 · 距初试 8 天</span></div>
+  <div class="th">概率专题：大数定律与中心极限</div>
+  <div class="it"><input type="checkbox" data-k="d26-0"><span class="lb lb数">数</span><span class="tx">数学① 2h50：大数定律与中心极限 —— 数据大盘看考频 10′ → 章节练 15 题 → 阶梯练 10 题，错题当场登记｜数学② 1h50：昨日错题回炉 12 题 + 公式速览 20′</span></div><div class="it"><input type="checkbox" data-k="d26-1"><span class="lb lb专">专</span><span class="tx">432 3.5h：四套卷错题 15 题重做 50′ → ★★★ F 组默写 40′ → 到期队列 20′ → 五张表默写 20′ → 手册错点对照 30′</span></div><div class="it"><input type="checkbox" data-k="d26-2"><span class="lb lb英">英</span><span class="tx">作文 1 篇限时 40′（手机与面对面（低头族））→ 对照改 20′｜阅读 1 篇（2018 T2）30′｜生词 15′</span></div><div class="it"><input type="checkbox" data-k="d26-3"><span class="lb lb政">政</span><span class="tx">政治 1h：肖四选择题 20′ + 主观题背 1 题（38 题 当代（全球治理））30′ + 时政 10′</span></div>
+  <div class="chk"><span>错题 ≥3 条</span><span>计算题写完 3 步</span><span>生词 8 个</span></div>
+</section>
+<section class="card" data-stage="C" id="d27">
+  <div class="hd"><b class="dt">12-12 周六</b><span class="tag tC">C 冲刺</span>
+  <span class="left">D28 · 距初试 7 天</span></div>
+  <div class="th">双模考：数学 + 英语</div>
+  <div class="it"><input type="checkbox" data-k="d27-0"><span class="lb lb数">数</span><span class="tx">08:30–11:30 数学全真：2025 真题（150′，不查书）｜12:20–13:50 三色订正 + 丢分归因 A–E</span></div><div class="it"><input type="checkbox" data-k="d27-1"><span class="lb lb专">专</span><span class="tx">19:00–21:30 432：F 组（估计量性质 / UMVUE / 有效） 快刷 40′ + 到期队列 20′ + 计算 1 道（次序统计量与相合性）40′ + 手册 30′</span></div><div class="it"><input type="checkbox" data-k="d27-2"><span class="lb lb英">英</span><span class="tx">14:00–17:00 英语整卷：同套真题（作文写满）｜17:00–17:40 对答案、算分</span></div><div class="it"><input type="checkbox" data-k="d27-3"><span class="lb lb政">政</span><span class="tx">21:30–22:30 政治：一页纸 067–070（4 页）+ 1000 题 20′</span></div>
+  <div class="chk"><span>数学套卷 ≥100</span><span>英语作文写完</span><span>432 计算 3 步</span></div>
+</section>
+<section class="card" data-stage="C" id="d28">
+  <div class="hd"><b class="dt">12-13 周日</b><span class="tag tC">C 冲刺</span>
+  <span class="left">D29 · 距初试 6 天</span></div>
+  <div class="th">考场节奏：432 全真</div>
+  <div class="it"><input type="checkbox" data-k="d28-0"><span class="lb lb数">数</span><span class="tx">09:00–11:00 数学错题本：本周套卷错题重做（只做错题）+ 公式速览 30′</span></div><div class="it"><input type="checkbox" data-k="d28-1"><span class="lb lb专">专</span><span class="tx">14:00–17:00 432 全真：第一套（180′，含涂卡）｜晚间 40′ 三色订正</span></div><div class="it"><input type="checkbox" data-k="d28-2"><span class="lb lb英">英</span><span class="tx">阅读 2 篇（2018 T3、2018 T4）+ 完型 1 篇 + 生词 25′</span></div><div class="it"><input type="checkbox" data-k="d28-3"><span class="lb lb政">政</span><span class="tx">下午前 30′ 复习昨日一页纸；晚间 60′ 政治整卷选择题 1 套 + 错题标注</span></div>
+  <div class="chk"><span>432 全真 ≥110</span><span>阅读错 ≤3</span><span>政治选择 ≥32</span></div>
+</section>
+<section class="card" data-stage="C" id="d29">
+  <div class="hd"><b class="dt">12-14 周一</b><span class="tag tC">C 冲刺</span>
+  <span class="left">D30 · 距初试 5 天</span></div>
+  <div class="th">概率专题：统计量与抽样分布</div>
+  <div class="it"><input type="checkbox" data-k="d29-0"><span class="lb lb数">数</span><span class="tx">数学① 2h50：统计量与抽样分布 —— 数据大盘看考频 10′ → 章节练 15 题 → 阶梯练 10 题，错题当场登记｜数学② 1h50：昨日错题回炉 12 题 + 公式速览 20′</span></div><div class="it"><input type="checkbox" data-k="d29-1"><span class="lb lb专">专</span><span class="tx">432 3.5h：四套卷错题 15 题重做 50′ → ★★★ B 组默写 40′ → 到期队列 20′ → 五张表默写 20′ → 手册错点对照 30′</span></div><div class="it"><input type="checkbox" data-k="d29-2"><span class="lb lb英">英</span><span class="tx">作文 1 篇限时 40′（AI 与学习（工具 vs 代写））→ 对照改 20′｜阅读 1 篇（2019 T2）30′｜生词 15′</span></div><div class="it"><input type="checkbox" data-k="d29-3"><span class="lb lb政">政</span><span class="tx">政治 1h：肖四选择题 20′ + 主观题背 1 题（34 题 马原（辩证法 / 认识论））30′ + 时政 10′</span></div>
+  
+</section>
+<section class="card" data-stage="C" id="d30">
+  <div class="hd"><b class="dt">12-15 周二</b><span class="tag tC">C 冲刺</span>
+  <span class="left">D31 · 距初试 4 天</span></div>
+  <div class="th">数学套卷：真题二刷·错题卷</div>
+  <div class="it"><input type="checkbox" data-k="d30-0"><span class="lb lb数">数</span><span class="tx">数学① 3h：真题二刷·错题卷 限时 150′（09:10–11:40）｜数学② 1h：三色订正 + 按 A 读题 / E 计算 分类登记</span></div><div class="it"><input type="checkbox" data-k="d30-1"><span class="lb lb专">专</span><span class="tx">432 3.5h：四套卷错题 15 题重做 50′ → ★★★ C 组默写 40′ → 到期队列 20′ → 五张表默写 20′ → 手册错点对照 30′</span></div><div class="it"><input type="checkbox" data-k="d30-2"><span class="lb lb英">英</span><span class="tx">小作文 1 篇限时 30′（建议信（图书馆 / 食堂））→ 对照合并版附录 B 改 30′｜阅读 1 篇（2019 T3）40′｜生词 25′</span></div><div class="it"><input type="checkbox" data-k="d30-3"><span class="lb lb政">政</span><span class="tx">政治 1h：肖四选择题 20′ + 主观题背 1 题（35 题 新思想（高质量发展））30′ + 时政 10′</span></div>
+  <div class="chk"><span>套卷 ≥100</span><span>计算题写完 3 步</span><span>生词 8 个</span></div>
+</section>
+<section class="card" data-stage="D" id="d31">
+  <div class="hd"><b class="dt">12-16 周三</b><span class="tag tD">D 收口</span>
+  <span class="left">D32 · 距初试 3 天</span></div>
+  <div class="th">只做保分：错题 + ★★★ + 模板</div>
+  <div class="it"><input type="checkbox" data-k="d31-0"><span class="lb lb数">数</span><span class="tx">错题本第 1 遍：只挑「A 读题 / E 计算」两类，≤60 题；重算 20 题</span></div><div class="it"><input type="checkbox" data-k="d31-1"><span class="lb lb专">专</span><span class="tx">★★★ 27 条过一遍（A–F 全组）+ 五张标准误表默写</span></div><div class="it"><input type="checkbox" data-k="d31-2"><span class="lb lb英">英</span><span class="tx">大作文模板默写 1 遍（11 句）+ 旧范文 1 篇限时 40′</span></div><div class="it"><input type="checkbox" data-k="d31-3"><span class="lb lb政">政</span><span class="tx">肖四选择题 1 套 + 主观题 34 / 35 模板默写</span></div>
+  <div class="chk"><span>错题 20 题全对</span><span>五张表能默</span><span>11 句不漏</span></div>
+</section>
+<section class="card" data-stage="D" id="d32">
+  <div class="hd"><b class="dt">12-17 周四</b><span class="tag tD">D 收口</span>
+  <span class="left">D33 · 距初试 2 天</span></div>
+  <div class="th">只做保分：回炉 + 对照</div>
+  <div class="it"><input type="checkbox" data-k="d32-0"><span class="lb lb数">数</span><span class="tx">错题本第 2 遍：只做「会但算错」15 道 + 公式表通读 1 遍</span></div><div class="it"><input type="checkbox" data-k="d32-1"><span class="lb lb专">专</span><span class="tx">四套卷错题 20 题重做 + 手册 §3 分布族对照 1 遍</span></div><div class="it"><input type="checkbox" data-k="d32-2"><span class="lb lb英">英</span><span class="tx">小作文 5 类开头各写 1 句 + 阅读 2 篇（只做旧题）</span></div><div class="it"><input type="checkbox" data-k="d32-3"><span class="lb lb政">政</span><span class="tx">肖四主观题 36 / 37 背 1 遍 + 时政 30′</span></div>
+  <div class="chk"><span>15 题全对</span><span>系数不错</span><span>5 类开头能默</span></div>
+</section>
+<section class="card" data-stage="D" id="d33">
+  <div class="hd"><b class="dt">12-18 周五</b><span class="tag tD">D 收口</span>
+  <span class="left">D34 · 距初试 1 天</span></div>
+  <div class="th">停新题：只翻旧账</div>
+  <div class="it"><input type="checkbox" data-k="d33-0"><span class="lb lb数">数</span><span class="tx">只翻错题本 + 公式表 2h，15:00 后彻底停数学</span></div><div class="it"><input type="checkbox" data-k="d33-1"><span class="lb lb专">专</span><span class="tx">★★★ 27 条最后过 1 遍（只读不写）+ 五张表 1 遍</span></div><div class="it"><input type="checkbox" data-k="d33-2"><span class="lb lb英">英</span><span class="tx">两篇旧范文各读 1 遍 + 模板默写 30′</span></div><div class="it"><input type="checkbox" data-k="d33-3"><span class="lb lb政">政</span><span class="tx">肖四主观题 38 + 时政 30′；20:30 收拾文具、查考场路线</span></div>
+  
+</section>
+<details><summary>五个不能错过的节点</summary>
+<table><tbody><tr><td>11-30 一</td><td>政治转段</td><td>一页纸第一轮读完；每天 1 道主观题，用 34–38 题抄材料模板</td></tr><tr><td>12-06 日</td><td>成卷收口</td><td>数学 3 套 ≥110、432 两套 ≥115、英语整卷 ≥55；不达标 12-07 起每天加 30′ 补短板</td></tr><tr><td>12-07 一</td><td>作文天天写</td><td>每天 1 篇限时（大小交替）写到 12-15；考前只默写，不改模板</td></tr><tr><td>12-10 四</td><td>打印准考证</td><td>研招网下载 PDF，打 3 份（书包/外套/家里）；同天查考场与午休点</td></tr><tr><td>12-16 三</td><td>进入收口</td><td>停一切新题；只做错题本、★★★ 27 条、五张表、作文模板、肖四</td></tr></tbody></table></details>
+<a class="pdf" href="assets/plan_v4.pdf">下载 A4 打印版（9 页 PDF）</a>
+<div class="foot">勾选存本机浏览器 · 换设备不互通</div>
+</main>
+<script>
+(function(){
+  var K='ds432.plan34', st={};
+  try{ st=JSON.parse(localStorage.getItem(K)||'{}'); }catch(e){ st={}; }
+  var boxes=[].slice.call(document.querySelectorAll('input[type=checkbox]'));
+  function save(){ try{ localStorage.setItem(K,JSON.stringify(st)); }catch(e){} }
+  function refresh(){
+    var total=document.querySelectorAll('.card').length, done=0;
+    document.querySelectorAll('.card').forEach(function(c){
+      var bs=[].slice.call(c.querySelectorAll('input'));
+      var all=bs.length>0 && bs.every(function(b){return b.checked;});
+      c.classList.toggle('todo-done', all);
+      if(all) done++;
+    });
+    document.getElementById('stat').textContent='已完成 '+done+' / '+total+' 天';
+    document.getElementById('pb').style.width=(done/total*100)+'%';
+  }
+  document.querySelectorAll('.it').forEach(function(row){
+    row.addEventListener('click', function(e){
+      if(e.target.tagName==='INPUT') return;
+      var b=row.querySelector('input'); b.checked=!b.checked;
+      b.dispatchEvent(new Event('change'));
+    });
+  });
+  boxes.forEach(function(b){
+    var k=b.getAttribute('data-k');
+    b.checked=!!st[k];
+    b.parentNode.classList.toggle('done', b.checked);
+    b.addEventListener('change', function(){
+      if(b.checked) st[k]=1; else delete st[k];
+      b.parentNode.classList.toggle('done', b.checked);
+      save(); refresh();
+    });
+  });
+  document.querySelectorAll('.chips button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.chips button').forEach(function(x){x.classList.remove('on');});
+      btn.classList.add('on');
+      var f=btn.getAttribute('data-f');
+      document.body.classList.toggle('only-todo', f==='todo');
+      document.querySelectorAll('.card').forEach(function(c){
+        var show = (f==='all'||f==='todo') ? true : c.getAttribute('data-stage')===f;
+        c.style.display = show ? '' : 'none';
+      });
+    });
+  });
+  refresh();
+  var start=new Date(2026,10,15), now=new Date();
+  var n=Math.floor((new Date(now.getFullYear(),now.getMonth(),now.getDate())-start)/86400000);
+  if(n>0 && n<34 && !location.hash){ var el=document.getElementById('d'+n); if(el) el.scrollIntoView({block:'start'}); }
+})();
+</script>
+</body></html>

@@ -164,7 +164,8 @@ U.boot("index.html");
     ["ladder.html","阶梯练","每个题型 基础→中档→拔高",m.nladder+" 题"],
     ["concepts.html","辨析卡","名词解释与概念辨析，★★★ 27 组",m.nconcept+" 组"],
     ["formulas.html","公式手册","分布表 / 区间估计 / 假设检验 / 方差分析",m.nformula+" 条"],
-    ["quiz.html","默写自测","遮挡答案，30 秒口述",m.nquiz+" 条"]
+    ["quiz.html","默写自测","遮挡答案，30 秒口述",m.nquiz+" 条"],
+    ["plan.html","34 天日程","四阶段 · 逐日任务 · 勾选打卡","9 页"]
   ];
   document.getElementById("entries").innerHTML = E.map(([h,t,d,n]) =>
     '<a class="entry" href="'+h+'"><div class="spread"><span class="t">'+t+'</span><span class="n">'+n+'</span></div><div class="d">'+d+'</div></a>').join("");
