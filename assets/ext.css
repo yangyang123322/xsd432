@@ -55,3 +55,14 @@ body.xdue [data-xid]:not(.is-due){ display:none !important; }
   .xbar .xg{ padding:0 6px; font-size:11px; white-space:nowrap; }
   .xbar .xdue{ font-size:11px; }
 }
+
+/* 不复习（移出复习循环） */
+.xbar.is-off{border-top-color:#e7d3c6;background:#fdf8f4}
+.xbar .xoffstate{background:#f6e6da;color:#a9542a}
+.xbar button.xoffbtn{color:#a9542a;border-color:#e7d3c6}
+.xbar button.xoffbtn:hover{background:#f8ece2;border-color:#c9743f;color:#8f431f}
+.xbar button.xon{color:#1f7a5c;border-color:#cfe3d9}
+.xbar button.xon:hover{background:#eef7f2}
+.xsum .xoffn{color:#a9542a}
+body.xoff [data-xid]:not(.is-off){display:none}
+body.xoff [data-xid].is-off{display:block}

@@ -88,7 +88,7 @@
     if (!r.due) r.due = today();
     return r;
   }
-  function isDue(r){ return !r.due || r.due <= today(); }
+  function isDue(r){ return !r.off && (!r.due || r.due <= today()); }
   function save(){ try { localStorage.setItem(K_REP, JSON.stringify(REP)); } catch(e){} }
   function grade(xid,g){
     var r=rec(xid), T=today();

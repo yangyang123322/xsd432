@@ -60,7 +60,7 @@
     return r;
   }
   function setRec(xid, o) { REP[xid] = o; persist(K_REP, REP); }
-  function isDue(r) { return !r.due || r.due <= todayStr(); }
+  function isDue(r) { return !r.off && (!r.due || r.due <= todayStr()); }
 
   // 三档评分：忘记 / 模糊 / 熟悉 → 不同间隔
   function gradeRec(xid, g) {
@@ -261,20 +261,34 @@
   function buildBar(item, xid) {
     var r = rec(xid);
     var bar = document.createElement("div");
-    bar.className = "xbar";
-    var dueTxt = isDue(r) ? "今天到期" : ("下次 " + r.due);
-    bar.innerHTML =
-      '<span>已复习</span><span class="xcount">' + r.n + '</span><span>次</span>' +
-      '<button data-x="again" class="xg again" title="忘了：今天再来一遍">忘记</button>' +
-      '<button data-x="fuzzy" class="xg fuzzy" title="模糊：短间隔再来">模糊</button>' +
-      '<button data-x="known" class="xg known" title="熟悉：拉长间隔">熟悉</button>' +
-      '<span class="xstate ' + STATE_CLS[r.m] + '">' + STATE_TXT[r.m] + '</span>' +
-      '<span class="xdue">' + dueTxt + '</span>' +
-      '<span style="margin-left:auto;color:#9aa4b2">' + (r.iv ? ("间隔 " + r.iv + " 天") : "未排期") + ' · 上次 ' + fmtDate(r.t) + '</span>';
+    var dueTxt = r.off ? "已移出复习" : (isDue(r) ? "今天到期" : ("下次 " + r.due));
+    var tail = '<span style="margin-left:auto;color:#9aa4b2">' + (r.iv ? ("间隔 " + r.iv + " 天") : "未排期") + ' · 上次 ' + fmtDate(r.t) + '</span>';
+    bar.className = "xbar" + (r.off ? " is-off" : "");
+    bar.innerHTML = r.off
+      ? ('<span>已复习</span><span class="xcount">' + r.n + '</span><span>次</span>' +
+         '<span class="xstate xoffstate">不复习</span>' +
+         '<span class="xdue">' + dueTxt + '</span>' +
+         '<button data-x="on" class="xg xon" title="重新加入复习循环">恢复复习</button>' + tail)
+      : ('<span>已复习</span><span class="xcount">' + r.n + '</span><span>次</span>' +
+         '<button data-x="again" class="xg again" title="忘了：今天再来一遍">忘记</button>' +
+         '<button data-x="fuzzy" class="xg fuzzy" title="模糊：短间隔再来">模糊</button>' +
+         '<button data-x="known" class="xg known" title="熟悉：拉长间隔">熟悉</button>' +
+         '<span class="xstate ' + STATE_CLS[r.m] + '">' + STATE_TXT[r.m] + '</span>' +
+         '<span class="xdue">' + dueTxt + '</span>' +
+         '<button data-x="off" class="xg xoffbtn" title="这个知识点不用再复习了">不复习</button>' + tail);
     bar.addEventListener("click", function (e) {
       var b = e.target.closest("[data-x]"); if (!b) return;
       e.preventDefault(); e.stopPropagation();
-      gradeRec(xid, b.getAttribute("data-x"));
+      var g = b.getAttribute("data-x");
+      if (g === "off" || g === "on") {
+        var rr = rec(xid);
+        if (g === "off") { rr.off = 1; }
+        else { delete rr.off; rr.due = todayStr(); }
+        setRec(xid, rr);
+      } else {
+        var rr2 = rec(xid); delete rr2.off; setRec(xid, rr2);
+        gradeRec(xid, g);
+      }
       renderItem(item, xid);
       updateSum();
     });
@@ -297,6 +311,7 @@
     item.classList.toggle("is-m2", r.m === 2);
     item.classList.toggle("is-untouched", !r.n && !r.m);
     item.classList.toggle("is-due", isDue(r));
+    item.classList.toggle("is-off", !!r.off);
     if (CLOZE) clozeApply(item);
     if (PEEK) peekApply(item);
   }
@@ -413,10 +428,11 @@
       }
       var b = e.target.closest("[data-f]"); if (!b) return;
       var f = b.getAttribute("data-f");
-      document.body.classList.remove("xhide-mastered", "xhide-undone", "xdue");
+      document.body.classList.remove("xhide-mastered", "xhide-undone", "xdue", "xoff");
       if (f === "unmastered") document.body.classList.add("xhide-mastered");
       if (f === "undone") document.body.classList.add("xhide-undone");
       if (f === "due") document.body.classList.add("xdue");
+      if (f === "off") document.body.classList.add("xoff");
       Array.prototype.forEach.call(sumEl.querySelectorAll("[data-f]"), function (x) {
         x.classList.toggle("on", x.getAttribute("data-f") === f);
       });
@@ -428,9 +444,10 @@
     var host = sumHost(); if (!host) return;
     var s = ensureSum(); if (!s) return;
     var items = host.querySelectorAll("[data-xid]");
-    var m2 = 0, m1 = 0, n = 0, tot = items.length;
+    var m2 = 0, m1 = 0, n = 0, tot = items.length, noff = 0;
     Array.prototype.forEach.call(items, function (el) {
       var r = rec(el.getAttribute("data-xid"));
+      if (r.off) noff++;
       if (r.m === 2) m2++; else if (r.m === 1) m1++;
       n += r.n || 0;
     });
@@ -443,6 +460,7 @@
       '<button data-f="due">今日到期 ' + dc + '</button>' +
       '<button data-f="unmastered">只看未掌握</button>' +
       '<button data-f="undone">只看没复习过</button>' +
+      (noff ? '<button data-f="off">只看不复习 ' + noff + '</button>' : '') +
       '<button data-t="cloze" class="xt' + (CLOZE ? " on" : "") + '">挖空</button>' +
       '<button data-t="peek" class="xt' + (PEEK ? " on" : "") + '">首字</button>' +
       (/^https?:/.test(location.protocol) ? '<button data-t="flash" class="xt xflash">闪卡</button>' : '') + '</span>';
@@ -496,6 +514,7 @@
         var r = rec(xid);
         el.classList.toggle("is-m2", r.m === 2);
         el.classList.toggle("is-untouched", !r.n && !r.m);
+        el.classList.toggle("is-off", !!r.off);
         return;
       }
       el.setAttribute("data-xdone", "1");
