@@ -15,6 +15,13 @@
   .mv .lad{border-top:1px dashed var(--line);margin-top:10px;padding-top:10px}
   .mv .lad .row{flex-wrap:wrap}
   .lvl{font-size:10.5px;padding:1px 6px;border-radius:4px;border:1px solid var(--line);color:var(--ink-3)}
+  .mctl{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;vertical-align:middle}
+  .mctl button{background:transparent;border:0;border-radius:0;padding:4px 9px;font-size:12px;line-height:1.5;cursor:pointer;color:var(--ink-3);font-family:inherit}
+  .mctl button+button{border-left:1px solid var(--line)}
+  .mctl button.on[data-m="1"]{background:rgba(31,111,92,.14);color:var(--accent);font-weight:600}
+  .mctl button.on[data-m="0"]{background:rgba(179,52,31,.10);color:var(--warn);font-weight:600}
+  .mstat{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:var(--ink-3);margin-top:10px}
+  .mstat b{color:var(--ink)}
 </style>
 <link rel="stylesheet" href="assets/ext.css">
 </head>
@@ -42,6 +49,7 @@
         <span class="chip" data-scope="5">留最近 5 年</span>
         <span class="chip" id="onlyUndone">只看还没练过的招</span>
       </div>
+      <div class="mstat" id="mstat"></div>
       <div class="filters" id="filters" style="margin-top:10px"></div>
     </div>
 
@@ -59,8 +67,8 @@
 U.boot("pojue.html");
 (function(){
   const D = window.DATA, J = D.pojue, Q = D.qs;
-  const LK = "learned";
-  let chap = "all", kw = "", scope = "all", onlyUndone = false;
+  const LK = "learned", RK = "ds432.rep", XID = id=>"pj:"+id;
+  let chap = "all", kw = "", scope = "all", onlyUndone = false, mfilter = "all";
 
   const chs = D.chapters;
   document.getElementById("filters").innerHTML =
@@ -89,7 +97,33 @@ U.boot("pojue.html");
     return null;
   }
   function learned(){ return U.get(LK, {}); }
-  function isLearned(id){ return !!learned()[id]; }
+  function todayStr(){ const d=new Date(), p=n=>(n<10?"0":"")+n; return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate()); }
+  // 掌握状态与 ext.js 共用一份（ds432.rep 的 m：0 未掌握 / 1 学习中 / 2 已掌握），这样才能进记忆曲线、闪卡和云同步
+  function rep(){
+    if (window.EXT && EXT.rep) return EXT.rep;
+    try { return JSON.parse(localStorage.getItem(RK) || "{}") || {}; } catch(e){ return {}; }
+  }
+  function rOf(id){ return rep()[XID(id)] || {}; }
+  function isMastered(id){ return rOf(id).m === 2; }
+  function setMastered(id, on){
+    const R = rep(), x = XID(id), r = R[x] || {n:0,t:0,ef:2.5,iv:0,lp:0,due:todayStr()};
+    r.m = on ? 2 : 0; r.t = Date.now();
+    if (!r.due) r.due = todayStr();
+    R[x] = r;
+    try { localStorage.setItem(RK, JSON.stringify(R)); } catch(e){}
+    const l = learned(); l[id] = on; U.set(LK, l);      // 旧页面读的「已学会」保持同步
+    try { window.dispatchEvent(new CustomEvent("ds432:ext-change", {detail: RK})); } catch(e){}
+    if (window.EXT && EXT.scan) EXT.scan();
+    draw();
+  }
+  // 老数据迁移：以前只标过「已学会」的招，补一条掌握记录
+  (function migrate(){
+    const l = learned(), R = rep(); let dirty = false;
+    Object.keys(l).forEach(id=>{
+      if (l[id] && !R[XID(id)]) { R[XID(id)] = {n:0,t:Date.now(),ef:2.5,iv:0,lp:0,due:todayStr(),m:2}; dirty = true; }
+    });
+    if (dirty){ try { localStorage.setItem(RK, JSON.stringify(R)); } catch(e){} }
+  })();
 
   // 留一手：按年份上限裁掉真题
   function visibleQs(j){
@@ -104,7 +138,9 @@ U.boot("pojue.html");
   function draw(){
     const list = J.filter(j=>{
       if (chap !== "all" && kpChap(j) !== chap) return false;
-      if (onlyUndone && isLearned(j.id)) return false;
+      if (onlyUndone && isMastered(j.id)) return false;
+      if (mfilter === "done" && !isMastered(j.id)) return false;
+      if (mfilter === "undone" && isMastered(j.id)) return false;
       if (!kw) return true;
       const blob = (j.name+j.short+j.signal+j.steps.join("")+j.template+j.kps.join("")).toLowerCase();
       return blob.includes(kw.toLowerCase());
@@ -118,7 +154,7 @@ U.boot("pojue.html");
       const lad = D.ladder.find(x=>x.no === j.no);
       const lv = {};
       (lad ? lad.items : []).forEach(it=>{ lv[it.level] = it; });
-      const cls = isLearned(j.id) ? " mv done" : " mv";
+      const cls = isMastered(j.id) ? " mv done" : " mv";
       const idx = J.findIndex(x=>x.id===j.id);
       const prev = J[idx-1], nextJ = J[idx+1];
 
@@ -127,7 +163,7 @@ U.boot("pojue.html");
         ' <span class="muted small" style="font-weight:400">'+j.short+'</span></h3>'+
         '<span class="row" style="gap:5px">'+(j.n? '<span class="chip">涉及 '+j.n+' 题 · '+j.pts+' 分</span>':'<span class="chip">综合</span>')+
         (j.years.length?'<span class="chip">'+j.years[0]+'—'+j.years[j.years.length-1]+'</span>':"")+
-        '<button class="btn sm" data-learn="'+j.id+'">'+(isLearned(j.id)?"✓ 已学会":"标记已学会")+'</button></span></div>'+
+        '<span class="mctl" data-mctl="'+j.id+'"><button data-m="0" class="'+(isMastered(j.id)?"":"on")+'">未掌握</button><button data-m="1" class="'+(isMastered(j.id)?"on":"")+'">✓ 掌握</button></span></span></div>'+
 
         '<div class="prog"><span>练过 '+st.done+' / '+st.n+'</span><span>做对 '+st.right+'</span>'+
           '<span class="bar"><i style="width:'+pct+'%"></i></span><span>'+pct+'%</span></div>'+
@@ -156,17 +192,43 @@ U.boot("pojue.html");
         "</div>";
     }).join("");
 
-    document.querySelectorAll("[data-learn]").forEach(b=>{
-      b.addEventListener("click", ()=>{
-        const id = b.getAttribute("data-learn");
-        const m = learned();
-        m[id] = !m[id];
-        U.set(LK, m);
-        draw();
+    document.querySelectorAll("[data-mctl]").forEach(g=>{
+      g.querySelectorAll("button[data-m]").forEach(b=>{
+        b.addEventListener("click", ()=>{ setMastered(g.getAttribute("data-mctl"), b.getAttribute("data-m") === "1"); });
       });
     });
   }
+  function updateStat(){
+    const tot = J.length;
+    let done = 0; J.forEach(j=>{ if (isMastered(j.id)) done++; });
+    const undone = tot - done, pct = tot ? Math.round(done/tot*100) : 0;
+    document.getElementById("mstat").innerHTML =
+      '掌握进度 <b>'+done+'</b> / '+tot+
+      '<span class="bar" style="width:110px;height:6px;display:inline-block;flex:0 0 110px;margin:0"><i style="width:'+pct+'%"></i></span>'+
+      '<b>'+pct+'%</b><span class="muted">未掌握 '+undone+'</span>'+
+      '<span style="flex:1"></span>'+
+      '<span class="chip'+(mfilter==="all"?" on":"")+'" data-mf="all">全部 '+tot+'</span>'+
+      '<span class="chip'+(mfilter==="undone"?" on":"")+'" data-mf="undone">只看未掌握 '+undone+'</span>'+
+      '<span class="chip'+(mfilter==="done"?" on":"")+'" data-mf="done">只看已掌握 '+done+'</span>';
+    document.querySelectorAll("[data-mf]").forEach(el=>{
+      el.addEventListener("click", ()=>{
+        mfilter = el.getAttribute("data-mf");
+        updateStat(); draw();
+      });
+    });
+  }
+  function refreshMctl(){
+    document.querySelectorAll("[data-mctl]").forEach(g=>{
+      const on = isMastered(g.getAttribute("data-mctl"));
+      const b0 = g.querySelector('[data-m="0"]'), b1 = g.querySelector('[data-m="1"]');
+      if (b0) b0.classList.toggle("on", !on);
+      if (b1) b1.classList.toggle("on", on);
+    });
+  }
+  window.addEventListener("ds432:ext-change", ()=>{ if (document.getElementById("mstat")) { updateStat(); refreshMctl(); } });
+
   draw();
+  updateStat();
   if (location.hash) { const el = document.querySelector(location.hash); if (el) el.scrollIntoView(); }
 })();
 </script>
