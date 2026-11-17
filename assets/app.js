@@ -122,7 +122,7 @@
     ["两根轴", [["chapters.html", "考纲树", "⌗"], ["pojue.html", "破题诀 34 招", "✦"], ["graph.html", "招法网络", "◎"], ["path.html", "学习路径", "⇢"]]],
     ["练习", [["bank.html", "真题题库", "☰"], ["exam.html", "组卷模考", "⏱"], ["papers.html", "八套卷", "▭"], ["ladder.html", "阶梯练 93", "≡"]]],
     ["背诵", [["concepts.html", "辨析卡 87", "⇄"], ["formulas.html", "公式手册", "∑"], ["quiz.html", "默写自测", "✎"]]],
-    ["我的", [["review.html", "复盘 · 诊断", "◍"]]],
+    ["我的", [["review.html", "复盘 · 诊断", "◍"], ["notes.html", "笔记汇总", "✎"]]],
   ];
   U.nav = function (page) {
     const el = document.querySelector(".side");
