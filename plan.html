@@ -42,12 +42,15 @@ th{text-align:left;color:var(--ink2);font-weight:500}
 a.pdf{display:block;text-align:center;margin:16px 0 6px;padding:12px;border-radius:12px;background:var(--acc);color:#fff;text-decoration:none;font-size:14px}
 .foot{color:#9aa39d;font-size:11.5px;text-align:center;margin-top:10px}
 body.only-todo .card.todo-done{display:none}
+.sync{display:flex;gap:6px;margin:6px 0 2px}
+.sync button{border:1px solid var(--line);background:#fff;color:var(--ink2);font-size:12px;padding:5px 10px;border-radius:8px}
 </style></head><body>
 <header>
   <h1>34 天冲刺 · 2026-11-15 → 12-18</h1>
   <div class="sub">初试 12-19/20 · 34 天 · 每天 10h · 数 4 / 432 3.5 / 英 1.5 / 政 1</div>
   <div class="pbar"><i id="pb"></i></div>
   <div class="sub" id="stat">已完成 0 / 34 天</div>
+  <div class="sync"><button id="exp">导出进度</button><button id="imp">导入进度</button><input id="impf" type="file" accept=".json" hidden></div>
   <div class="chips">
     <button class="on" data-f="all">全部</button>
     <button data-f="todo">只看没做完</button>
@@ -301,8 +304,29 @@ body.only-todo .card.todo-done{display:none}
 </main>
 <script>
 (function(){
-  var K='ds432.plan34', st={};
+  var K='plan34.v8', OLD='ds432.plan34', st={};
   try{ st=JSON.parse(localStorage.getItem(K)||'{}'); }catch(e){ st={}; }
+  // 一次性迁移：旧键 ds432.plan34 的 dN-i → v8-<mmdd>-i （与 v10 同一套键）
+  try{
+    var old=JSON.parse(localStorage.getItem(OLD)||'null');
+    if(old && Object.keys(st).length===0){
+      var D0=Date.UTC(2026,10,15), mapped={};
+      Object.keys(old).forEach(function(k){
+        var m=/^d(\d+)-(\d+)$/.exec(k); if(!m) return;
+        var t=new Date(D0+Number(m[1])*86400000);
+        var mm=('0'+(t.getUTCMonth()+1)).slice(-2), dd=('0'+t.getUTCDate()).slice(-2);
+        mapped['v8-'+mm+'-'+dd+'-'+m[2]]=1;
+      });
+      if(Object.keys(mapped).length){ st=mapped; localStorage.setItem(K,JSON.stringify(st)); }
+    }
+  }catch(e){}
+  // 把页面里的 dN-i 键翻译成 v10 的 v8-<mmdd>-i 键
+  function vk(k){
+    var m=/^d(\d+)-(\d+)$/.exec(k||""); if(!m) return k;
+    var t=new Date(Date.UTC(2026,10,15)+Number(m[1])*86400000);
+    var mm=('0'+(t.getUTCMonth()+1)).slice(-2), dd=('0'+t.getUTCDate()).slice(-2);
+    return 'v8-'+mm+'-'+dd+'-'+m[2];
+  }
   var boxes=[].slice.call(document.querySelectorAll('input[type=checkbox]'));
   function save(){ try{ localStorage.setItem(K,JSON.stringify(st)); }catch(e){} }
   function refresh(){
@@ -324,7 +348,7 @@ body.only-todo .card.todo-done{display:none}
     });
   });
   boxes.forEach(function(b){
-    var k=b.getAttribute('data-k');
+    var k=vk(b.getAttribute('data-k'));
     b.checked=!!st[k];
     b.parentNode.classList.toggle('done', b.checked);
     b.addEventListener('change', function(){
@@ -333,7 +357,25 @@ body.only-todo .card.todo-done{display:none}
       save(); refresh();
     });
   });
-  document.querySelectorAll('.chips button').forEach(function(btn){
+    document.getElementById('exp').addEventListener('click', function(){
+    var blob=new Blob([JSON.stringify({v:1,store:st},null,1)],{type:'application/json'});
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download='plan34-progress-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+  });
+  document.getElementById('imp').addEventListener('click', function(){ document.getElementById('impf').click(); });
+  document.getElementById('impf').addEventListener('change', function(e){
+    var f=e.target.files[0]; if(!f) return;
+    var r=new FileReader();
+    r.onload=function(){
+      try{
+        var o=JSON.parse(r.result); var add=(o&&o.store)||o||{}; var n=0;
+        Object.keys(add).forEach(function(k){ if(!st[k]){ st[k]=1; n++; } });
+        save(); location.reload();
+      }catch(err){ alert('文件读不出来：'+err.message); }
+    };
+    r.readAsText(f);
+  });
+document.querySelectorAll('.chips button').forEach(function(btn){
     btn.addEventListener('click', function(){
       document.querySelectorAll('.chips button').forEach(function(x){x.classList.remove('on');});
       btn.classList.add('on');
