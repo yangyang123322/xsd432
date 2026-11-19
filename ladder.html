@@ -77,7 +77,9 @@ U.boot("ladder.html");
   function setM(no, lv, on){
     const R = rep(), k = KEY(no, lv), r = R[k] || {n:0, t:0, ef:2.5, iv:0, lp:0, due:TODAY};
     r.m = on ? 2 : 0; r.t = Date.now();
-    if (!r.due) r.due = TODAY;
+    r.iv = on ? 5 : 1;
+    { const p=TODAY.split("-"), d=new Date(+p[0],+p[1]-1,+p[2]); d.setDate(d.getDate()+r.iv);
+      r.due = d.getFullYear()+"-"+(d.getMonth()+1<10?"0":"")+(d.getMonth()+1)+"-"+(d.getDate()<10?"0":"")+d.getDate(); }
     R[k] = r;
     try { localStorage.setItem(RK, JSON.stringify(R)); } catch(e){}
     try { window.dispatchEvent(new CustomEvent("ds432:ext-change", {detail: RK})); } catch(e){}

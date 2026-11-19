@@ -98,6 +98,7 @@ U.boot("pojue.html");
   }
   function learned(){ return U.get(LK, {}); }
   function todayStr(){ const d=new Date(), p=n=>(n<10?"0":"")+n; return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate()); }
+  function addDays(s,n){ const p=s.split("-"), d=new Date(+p[0],+p[1]-1,+p[2]); d.setDate(d.getDate()+n); return d.getFullYear()+"-"+(d.getMonth()+1<10?"0":"")+(d.getMonth()+1)+"-"+(d.getDate()<10?"0":"")+d.getDate(); }
   // 掌握状态与 ext.js 共用一份（ds432.rep 的 m：0 未掌握 / 1 学习中 / 2 已掌握），这样才能进记忆曲线、闪卡和云同步
   function rep(){
     if (window.EXT && EXT.rep) return EXT.rep;
@@ -108,7 +109,8 @@ U.boot("pojue.html");
   function setMastered(id, on){
     const R = rep(), x = XID(id), r = R[x] || {n:0,t:0,ef:2.5,iv:0,lp:0,due:todayStr()};
     r.m = on ? 2 : 0; r.t = Date.now();
-    if (!r.due) r.due = todayStr();
+    r.iv = on ? 5 : 1;              // 掌握 5 天后再来，未掌握 1 天后再来
+    r.due = addDays(todayStr(), r.iv);
     R[x] = r;
     try { localStorage.setItem(RK, JSON.stringify(R)); } catch(e){}
     const l = learned(); l[id] = on; U.set(LK, l);      // 旧页面读的「已学会」保持同步

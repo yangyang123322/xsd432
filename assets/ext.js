@@ -62,22 +62,22 @@
   function setRec(xid, o) { REP[xid] = o; persist(K_REP, REP); }
   function isDue(r) { return !r.off && (!r.due || r.due <= todayStr()); }
 
-  // 三档评分：忘记 / 模糊 / 熟悉 → 不同间隔
+  // 固定间隔（2026-11-19 改）：陌生 1 天 / 一般 3 天 / 熟悉 5 天，不累加，每次以最后一次点击为准
+  var DUE_DAYS = { again: 1, fuzzy: 3, ok: 5 };
   function gradeRec(xid, g) {
     var r = rec(xid), T = todayStr();
+    var d = (g === "again") ? 1 : (g === "fuzzy") ? 3 : 5;
     r.n += 1; r.t = Date.now();
-    if (g === "again") {                        // 忘记：当天再来，难度上调
-      r.lp += 1; r.ef = Math.max(1.3, r.ef - 0.2);
-      r.iv = 0; r.due = T; r.m = 0;
-    } else if (g === "fuzzy") {                 // 模糊：短间隔 +20%
-      r.ef = Math.max(1.3, r.ef - 0.05);
-      r.iv = r.iv <= 0 ? 1 : Math.max(1, Math.round(r.iv * 1.2));
-      r.due = addDays(T, r.iv); r.m = 1;
-    } else {                                    // 熟悉：长间隔 ×EF
-      r.ef = Math.min(3.0, r.ef + 0.1);
-      r.iv = r.iv <= 0 ? 3 : (r.iv <= 3 ? 7 : Math.round(r.iv * r.ef));
-      r.due = addDays(T, r.iv); r.m = 2;
-    }
+    r.iv = d;                       // 间隔就是固定的 1 / 3 / 5 天
+    r.due = addDays(T, d);          // 从今天起算，不叠加
+    r.m = (g === "again") ? 0 : (g === "fuzzy") ? 1 : 2;
+    setRec(xid, r);
+    return r;
+  }
+  function setDue(xid, days, m) {   // 供页面「掌握 / 未掌握」按钮直接排期
+    var r = rec(xid);
+    r.n += 1; r.t = Date.now(); r.iv = days; r.due = addDays(todayStr(), days);
+    if (typeof m === "number") r.m = m;
     setRec(xid, r);
     return r;
   }
@@ -270,9 +270,9 @@
          '<span class="xdue">' + dueTxt + '</span>' +
          '<button data-x="on" class="xg xon" title="重新加入复习循环">恢复复习</button>' + tail)
       : ('<span>已复习</span><span class="xcount">' + r.n + '</span><span>次</span>' +
-         '<button data-x="again" class="xg again" title="忘了：今天再来一遍">忘记</button>' +
-         '<button data-x="fuzzy" class="xg fuzzy" title="模糊：短间隔再来">模糊</button>' +
-         '<button data-x="known" class="xg known" title="熟悉：拉长间隔">熟悉</button>' +
+         '<button data-x="again" class="xg again" title="陌生：1 天后再来">陌生</button>' +
+         '<button data-x="fuzzy" class="xg fuzzy" title="一般：3 天后再来">一般</button>' +
+         '<button data-x="known" class="xg known" title="熟悉：5 天后再来">熟悉</button>' +
          '<span class="xstate ' + STATE_CLS[r.m] + '">' + STATE_TXT[r.m] + '</span>' +
          '<span class="xdue">' + dueTxt + '</span>' +
          '<button data-x="off" class="xg xoffbtn" title="这个知识点不用再复习了">不复习</button>' + tail);
@@ -562,6 +562,7 @@
     scan: scan, savePos: savePos, restorePos: restorePos,
     setPage: function (k) { window.EXT_PAGE_KEY = k; },
     rescan: function () { scan(); },
+    gradeRec: gradeRec, setDue: setDue, dueDays: DUE_DAYS,
     onRender: function (k) { if (k) window.EXT_PAGE_KEY = k; scan(); setTimeout(restorePos, 60); }
   };
 })();
