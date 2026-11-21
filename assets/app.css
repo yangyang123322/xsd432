@@ -244,7 +244,7 @@ input[type=search]:focus,select:focus,input[type=text]:focus{border-color:var(--
 footer.foot{margin-top:60px; padding-top:18px; border-top:1px solid var(--line); color:var(--ink-3); font-size:12px}
 
 /* ---------- 窄屏（必须放在最后，才能覆盖上面的组件定义） ---------- */
-@media(max-width:860px){
+@media(max-width:0px){ /* 2026-11-21 常驻 PC 版：原 max-width:860px 的折叠规则已停用 */
   .shell{grid-template-columns:minmax(0,1fr); min-height:0; align-content:start}
   .side{
     position:static; height:auto; align-self:start; overflow:visible; padding:10px 12px 6px;
@@ -267,7 +267,7 @@ footer.foot{margin-top:60px; padding-top:18px; border-top:1px solid var(--line);
   .bar-row{grid-template-columns:1fr 64px 58px !important}
 }
 
-@media(max-width:600px){
+@media(max-width:0px){ /* 2026-11-21 常驻 PC 版：原 max-width:600px 的折叠规则已停用 */
   .g4{grid-template-columns:1fr 1fr}
   .q-head{display:block; padding:12px 14px}
   .q-no{width:auto; padding-top:0; margin-bottom:2px; font-size:10.5px}
@@ -282,3 +282,8 @@ footer.foot{margin-top:60px; padding-top:18px; border-top:1px solid var(--line);
 
 .q.hl{border-color:var(--accent); box-shadow:0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent)}
 .btn[disabled]{opacity:.42; cursor:not-allowed; pointer-events:none}
+
+/* 2026-11-21 常驻 PC 版：长公式/宽内容在窄窗口里就地横向滚动，不把整页撑开 */
+.katex-display,.katex-display>.katex-table,.qq,.q-stem,.in,.body,.tpl,.trap{max-width:100%;overflow-x:auto;overflow-y:hidden}
+.katex-display{margin:8px 0}
+header,main,.main,.shell{min-width:0}

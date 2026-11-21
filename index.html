@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=1024">
 <title>432 统计 · 西大真题结构化题库</title>
 <link rel="stylesheet" href="assets/katex/katex.min.css">
 <link rel="stylesheet" href="assets/app.css">
@@ -171,9 +171,9 @@ U.boot("index.html");
     '<a class="entry" href="'+h+'"><div class="spread"><span class="t">'+t+'</span><span class="n">'+n+'</span></div><div class="d">'+d+'</div></a>').join("");
 })();
 </script>
-<script>/* auto-to-mobile：窄屏直接进手机版，避免电脑版在手机上挤成一团 */
+<script>/* 默认常驻 PC 版：不再按窄屏自动跳手机版；需要手机版请加 ?m=1 */
 (function(){try{
-  if (sessionStorage.getItem('stayDesktop')==='1') return;
+  if (location.search.indexOf('m=1') < 0) return;   /* 2026-11-21：默认常驻 PC 版，只有显式 ?m=1 才进手机版 */
   if (window.matchMedia('(max-width: 819px)').matches && !/mobile\.html/.test(location.href)){
     location.replace('mobile.html');
   }
