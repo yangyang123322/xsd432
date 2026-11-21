@@ -174,7 +174,7 @@ U.boot("index.html");
 <script>/* 默认常驻 PC 版：不再按窄屏自动跳手机版；需要手机版请加 ?m=1 */
 (function(){try{
   if (location.search.indexOf('m=1') < 0) return;   /* 2026-11-21：默认常驻 PC 版，只有显式 ?m=1 才进手机版 */
-  if (window.matchMedia('(max-width: 819px)').matches && !/mobile\.html/.test(location.href)){
+  if (!/mobile\.html/.test(location.href)){
     location.replace('mobile.html');
   }
 }catch(e){}})();</script>
